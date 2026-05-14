@@ -2,10 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-conf.toml
+src/conf.toml
 # C extensions
 *.so
 .idea/
+.gitignore
 # Distribution / packaging
 .Python
 build/
