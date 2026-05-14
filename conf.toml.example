@@ -3,7 +3,7 @@
 
 #Exectuion mode
 # Execution mode 1: running WTF on AP / 0: running WTF on client machine
-execution_mode = 1
+execution_mode = 0
 
 #Wi-Fi interface's IP address on host
 [client_conf]

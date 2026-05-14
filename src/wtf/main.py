@@ -12,9 +12,7 @@ def main():
 
     config = load_config()
     AP = build_ap(config)
-    if not AP.ap_status():
-        print("Access Point software interface is disabled (check UCI)")
-        exit()
+    AP.ap_status()
     wifi_channels,ht_modes = AP.get_wifi_capabilities()
     #wifi_channels = ['1','2']
     #ht_modes = ['HT20','HT40']

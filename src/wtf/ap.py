@@ -1,7 +1,8 @@
 import subprocess
-
-from src.tooling import run_cmd
+from tooling import debug_printer
+from tooling import run_cmd
 from ssh_connection import get_client, remote_execution
+from errors import APDisabledError
 
 class Ap():
     def __init__(self,
@@ -44,6 +45,7 @@ class Ap():
         #SSH Client connection
         self.client = get_client(self.control_target_ip)
 
+    @debug_printer
     def get_wifi_capabilities(self):
         cmds = [f"iwinfo {self.ap_phy} htmodelist",
                 f"iwinfo {self.ap_phy} freq"]
@@ -69,7 +71,7 @@ class Ap():
                 ht_modes = output[0]
         return wifi_channels_list, ht_modes.split()
 
-
+    @debug_printer
     def set_wifi_capabilities_OpenWrt(self,channel:int, ht_mode:str):
         #Due to the target OS is an OpenWRT, UCI configuration interface
         #is used to set up desirable Wi-Fi Capabilities
@@ -85,33 +87,37 @@ class Ap():
         if self.execution_mode == 0:
             _ = remote_execution(client = self.client, cmds = cmds)
 
-
-
+    @debug_printer
     def getter(self):
         args = ['tx_bytes', 'rx_bytes', 'tx_packets', 'rx_packets']
+        cmd_base = f'cat /sys/class/net/{self.ap_wifi_iface}/statistics/'
+        cmds = {}
+        for arg in args:
+            cmd = cmd_base + arg
+            cmds[arg] = cmd
         result = {}
         if self.execution_mode == 1:
-            for x in args:
-                res = subprocess.run(f'cat /sys/class/net/{self.ap_wifi_iface}/statistics/{x}',
-                                     shell=True, capture_output=True, text=True)
+            for arg, cmd in cmds.items():
+                res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 stdout = res.stdout
-                result[x] = stdout
+                result[arg] = stdout
 
         if self.execution_mode == 0:
-            output = remote_execution(client = self.client,cmds =  args)
+            for arg, cmd in cmds.items():
+                output = remote_execution(self.client, [cmd])
+                result[arg] = output[0]
 
         return result
 
-
+    @debug_printer
     def ap_status(self):
         if self.execution_mode == 1:
-            cmd = f"uci show.wireless.{self.uci_ap}.disabled"
+            cmd = f"uci show.wireless.{self.uci_ap_iface}.disabled"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if not "uci: Entry not found" in result.stdout:
-                return True
-            else:
-                return False
+            if "uci: Entry not found" in result.stdout:
+                raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
 
+    @debug_printer
     def ap_link_status(self):
         cmd = f"dmesg | tail -n 10"
         if self.execution_mode == 1:
@@ -121,18 +127,20 @@ class Ap():
             return False
 
         if self.execution_mode == 0:
-            output = remote_execution(self.client,cmd)[0]
+            output = remote_execution(self.client,[cmd])[0]
             if output.find("link becomes ready"):
                 return True
             return False
 
+    @debug_printer
     def run_test(self, timeout):
         net_data_before_test = self.getter()
-        _ = remote_execution(client =self.client, cmds = ["iperf3 -s"])
+        _ = remote_execution(client =self.client, cmds = ["iperf3 -s -D"])
         run_cmd(f"iperf3 -c {self.remote_wifi_ip} -B {self.local_wifi_ip} -b 0 -t {timeout}")
         net_data_after_test = self.getter()
         _ = remote_execution(client = self.client, cmds = ["killall iperf3"])
-        # results calculation
+
+        #results calculation
         delta = {}
         for key in net_data_before_test.keys():
             delta[key] = int(net_data_after_test[key].strip()) - int(net_data_before_test[key].strip())

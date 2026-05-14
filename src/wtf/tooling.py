@@ -1,5 +1,6 @@
 import subprocess
 import time
+from functools import wraps
 
 REQUIRED_ROOT_FIELDS = [
     "execution_mode",
@@ -30,8 +31,11 @@ IP_FIELDS = {
     ],
 }
 
-def connection_status(target_ip):
-    cmd = [f"ping {target_ip} -c 1 -W 1"]
+def connection_status(target_ip, bind_ip = 0):
+    if bind_ip:
+        cmd = [f"ping {target_ip} -c 1 -W 1 -I {bind_ip}"]
+    else:
+        cmd = [f"ping {target_ip} -c 1 -W 1"]
     print("#", " ".join(cmd))
     ping_res_ip = subprocess.run(cmd, shell=True, text=True, capture_output=True)
     if ping_res_ip.returncode == 0:
@@ -46,11 +50,11 @@ def run_cmd(cmd:str):
     subprocess.run(cmd, shell=True)
     time.sleep(0.1)
 
+def debug_printer(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print("#DEBUG")
+        print(f"Executing: {func.__name__}")
+        return func(*args, **kwargs)
 
-
-
-
-
-
-
-
+    return wrapper
