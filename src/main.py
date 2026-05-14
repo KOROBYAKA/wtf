@@ -21,17 +21,17 @@ def main():
     print("Starting tests")
     for channel in wifi_channels:
         final_result[channel] = {}
-        for htmode in ht_modes:
-            print(f"Setting channel:{channel} and htmode: {htmode}")
-            AP.set_wifi_capabilities_OpenWrt(channel,htmode)
+        for ht_mode in ht_modes:
+            print(f"Setting channel:{channel} and htmode: {ht_mode}")
+            AP.set_wifi_capabilities_OpenWrt(channel,ht_mode)
             time.sleep(5)
             skip = False
-            for x in range(0,4,1):
-                if AP.connection_status() and AP.ap_link_status():
+            for x in range(0,4):
+                if connection_status(AP.remote_wifi_ip) and AP.ap_link_status():
                     break
                 else:
                     if x == 3:
-                        print(f"Reconnect tries are gone, probably AP is not capable to work on channel {channel} with htmode {htmode}.\nHint: "
+                        print(f"Reconnect tries are gone, probably AP is not capable to work on channel {channel} with htmode {ht_mode}.\nHint: "
                               f"if you are sure that AP is capable to work with this physical signal configuration increase the timeout time")
                         skip = True
                     else:
@@ -39,8 +39,8 @@ def main():
                         time.sleep(5+x*5)
             if skip: continue
             result = AP.run_test(config["defaults"]["timeout"])
-            final_result[channel][htmode] = result
-
+            final_result[channel][ht_mode] = result
+    AP.client.close()
     #print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
     #save_output(final_result)
 

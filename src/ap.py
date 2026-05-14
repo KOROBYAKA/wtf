@@ -41,6 +41,9 @@ class Ap():
         else:
             raise ValueError("execution_mode must be 1 for AP mode or 0 for client mode")
 
+        #SSH Client connection
+        self.client = get_client(self.control_target_ip)
+
     def get_wifi_capabilities(self):
         cmds = [f"iwinfo {self.ap_phy} htmodelist",
                 f"iwinfo {self.ap_phy} freq"]
@@ -56,7 +59,7 @@ class Ap():
                     raise SystemExit(1)
 
         if self.execution_mode == 0:
-                output = remote_execution(self.client, cmds)
+                output = remote_execution(client = self.client, cmds = cmds)
                 for line in output[1].split("\n"):
                     try:
                         wifi_channels_list.append(line.strip(" *()\\|/").split(" ")[6].strip(")"))
@@ -71,8 +74,8 @@ class Ap():
         #Due to the target OS is an OpenWRT, UCI configuration interface
         #is used to set up desirable Wi-Fi Capabilities
         #If you want use it on another
-        cmds = [f"uci set wireless.{self.uci_ap}.channel='{channel}'",
-                f"uci set wireless.{self.uci_ap}.htmode='{ht_mode}'",
+        cmds = [f"uci set wireless.{self.uci_ap_iface}.channel='{channel}'",
+                f"uci set wireless.{self.uci_ap_iface}.htmode='{ht_mode}'",
                 "uci commit",
                 "wifi reload"]
         if self.execution_mode == 1:
@@ -80,7 +83,7 @@ class Ap():
                 subprocess.run(cmd, shell=True, check=True, text=True)
 
         if self.execution_mode == 0:
-            _ = remote_execution(self.client, cmds)
+            _ = remote_execution(client = self.client, cmds = cmds)
 
 
 
@@ -95,7 +98,7 @@ class Ap():
                 result[x] = stdout
 
         if self.execution_mode == 0:
-            output = remote_execution(self.client, args)
+            output = remote_execution(client = self.client,cmds =  args)
 
         return result
 
@@ -125,11 +128,12 @@ class Ap():
 
     def run_test(self, timeout):
         net_data_before_test = self.getter()
-        remote_execution(["iperf3 -s"])
-        run_cmd(f"iperf3 -c {self.ip_cl} -B {self.ip_ap} -b 0 -t {timeout}")
+        _ = remote_execution(client =self.client, cmds = ["iperf3 -s"])
+        run_cmd(f"iperf3 -c {self.remote_wifi_ip} -B {self.local_wifi_ip} -b 0 -t {timeout}")
         net_data_after_test = self.getter()
-        remote_execution(["killall iperf3"])
-        delta = {} # results calculation
+        _ = remote_execution(client = self.client, cmds = ["killall iperf3"])
+        # results calculation
+        delta = {}
         for key in net_data_before_test.keys():
             delta[key] = int(net_data_after_test[key].strip()) - int(net_data_before_test[key].strip())
 

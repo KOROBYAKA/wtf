@@ -4,11 +4,10 @@ import ipaddress
 from tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
 from errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
-
-
 def load_config():
     with open("conf.toml", mode="rb") as fp:
         config = tomllib.load(fp)
+        return config
 
 def check_defaults(defaults):
     command = [f'-t {defaults["timeout"]}']
@@ -65,7 +64,7 @@ def build_ap(config):
         cl_wifi_ip=config["client_conf"]["cl_wifi_ip"],
         cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
 
-        execution_mode=config["execution_conf"]["execution_mode"],
+        execution_mode=config["execution_mode"],
     )
 
     return ap
