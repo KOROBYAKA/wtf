@@ -1,4 +1,4 @@
-from tooling import debug_printer
+from wtf.tooling import debug_printer
 import paramiko
 from getpass import getpass
 

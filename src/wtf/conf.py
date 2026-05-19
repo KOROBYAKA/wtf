@@ -1,8 +1,8 @@
 import tomllib
-from ap import Ap
+from wtf.ap import Ap
 import ipaddress
-from tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
-from errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
+from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
+from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
 def load_config():
     with open("conf.toml", mode="rb") as fp:

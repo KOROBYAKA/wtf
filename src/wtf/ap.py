@@ -1,8 +1,7 @@
 import subprocess
-from tooling import debug_printer
-from tooling import run_cmd
-from ssh_connection import get_client, remote_execution
-from errors import APDisabledError
+from wtf.tooling import run_cmd, debug_printer
+from wtf.ssh_connection import get_client, remote_execution
+from wtf.errors import APDisabledError
 
 class Ap():
     def __init__(self,
@@ -34,7 +33,7 @@ class Ap():
         if execution_mode == 1:
             self.local_wifi_ip = self.ap_wifi_ip
             self.remote_wifi_ip = self.cl_wifi_ip
-            self.control_target_ip = None
+            self.control_target_ip = self.cl_ctrl_ip
         elif execution_mode == 0:
             self.local_wifi_ip = self.cl_wifi_ip
             self.remote_wifi_ip = self.ap_wifi_ip
@@ -42,8 +41,14 @@ class Ap():
         else:
             raise ValueError("execution_mode must be 1 for AP mode or 0 for client mode")
 
-        #SSH Client connection
+
+
+
+    @debug_printer
+    def set_ssh(self):
+        # SSH Client connection
         self.client = get_client(self.control_target_ip)
+
 
     @debug_printer
     def get_wifi_capabilities(self):
@@ -146,3 +151,11 @@ class Ap():
             delta[key] = int(net_data_after_test[key].strip()) - int(net_data_before_test[key].strip())
 
         return delta
+
+    @debug_printer
+    def generate_metadata(self) -> dict:
+        return self.__dict__
+
+
+
+

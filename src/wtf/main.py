@@ -1,17 +1,17 @@
 #!/usr/bin/python3
 
 import time
-from ap import Ap
-import json
-from datetime import datetime
-from conf import load_config, build_ap
-from tooling import connection_status,run_cmd
+from wtf.conf import load_config, build_ap
+from wtf.tooling import connection_status
+from wtf.results import print_results
+
 
 def main():
     final_result = {}
 
     config = load_config()
     AP = build_ap(config)
+    AP.set_ssh()
     AP.ap_status()
     wifi_channels,ht_modes = AP.get_wifi_capabilities()
     #wifi_channels = ['1','2']
@@ -25,7 +25,7 @@ def main():
             time.sleep(5)
             skip = False
             for x in range(0,4):
-                if connection_status(AP.remote_wifi_ip) and AP.ap_link_status():
+                if connection_status(AP.remote_wifi_ip, AP.local_wifi_ip) and AP.ap_link_status():
                     break
                 else:
                     if x == 3:
@@ -38,7 +38,8 @@ def main():
             if skip: continue
             result = AP.run_test(config["defaults"]["timeout"])
             final_result[channel][ht_mode] = result
-    AP.client.close()
+    if AP.client != None:
+        AP.client.close()
     #print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
     #save_output(final_result)
 

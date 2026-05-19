@@ -1,12 +1,17 @@
 import json
 from datetime import datetime
+from pathlib import Path
+import os
 
-def save_output(final_result):
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_file = f"test_results_{timestamp}.json"
+def save_json(path, final_result, metadata):
+
+    output_file = path.joinpath("/results.json")
+    metadata = path.joinpath("/metadata.json")
     with open(output_file, "w") as f:
         json.dump(final_result, f, indent=4)
 
+    with open(metadata, "w") as f:
+        json.dump(metadata, f)
     print(f"Saved test results to {output_file}")
 
 def print_results(final_result, htmodes, channels, timeout):
@@ -29,3 +34,17 @@ def print_results(final_result, htmodes, channels, timeout):
         print("HT MODE  |","|".join(ht))
         print("TX BYTES |","|".join(tx_res))
         print("RX BYTES |","|".join(rx_res))
+
+def save_results(format, final_result, metadata):
+    path = Path.cwd()
+    base_dir = path.joinpath("/results")
+    if not base_dir.exists():
+        os.mkdir(str(base_dir))
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    res_dir = base_dir.joinpath(timestamp)
+    if not res_dir.exists():
+        os.mkdir(str(res_dir))
+
+    if format == "json":
+        save_json(res_dir, final_result, metadata)
+
