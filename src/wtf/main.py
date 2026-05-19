@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import time
-from wtf.conf import load_config, build_ap
+from wtf.conf import load_config, build_ap, check_defaults
 from wtf.tooling import connection_status
 from wtf.results import print_results
 
@@ -11,6 +11,7 @@ def main():
 
     config = load_config()
     AP = build_ap(config)
+    AP.iperf_cmd = check_defaults(config["defaults"])
     AP.set_ssh()
     AP.ap_status()
     wifi_channels,ht_modes = AP.get_wifi_capabilities()

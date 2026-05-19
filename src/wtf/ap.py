@@ -41,6 +41,8 @@ class Ap():
         else:
             raise ValueError("execution_mode must be 1 for AP mode or 0 for client mode")
 
+        self.client = None
+        self.iperf_cmd = None
 
 
 
@@ -48,7 +50,6 @@ class Ap():
     def set_ssh(self):
         # SSH Client connection
         self.client = get_client(self.control_target_ip)
-
 
     @debug_printer
     def get_wifi_capabilities(self):
