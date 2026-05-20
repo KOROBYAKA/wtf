@@ -14,6 +14,13 @@ class APDisabledError(APError):
     def __str__(self):
         return f"{self.msg}"
 
+class InvalidIPAddressError(APError):
+    def __init__(self,msg):
+        self.msg = msg
+        super().__init__(self.msg)
+    def __str__(self):
+        return f"{self.msg}"
+
 class MissingFieldError(ConfigError):
     def __init__(self, section_name, field_name):
         self.msg = f"Missing required configuration field: the field {field_name} must be defined in {section_name}."

@@ -2,6 +2,7 @@ import subprocess
 from wtf.tooling import run_cmd, debug_printer
 from wtf.ssh_connection import get_client, remote_execution
 from wtf.errors import APDisabledError
+from wtf.conf import config_validation
 
 class Ap():
     def __init__(self,
@@ -44,12 +45,36 @@ class Ap():
         self.client = None
         self.iperf_cmd = None
 
+    @classmethod
+    def build_ap(cls, config):
+        config_validation(config)
 
+        ap = cls(
+            uci_ap_iface=config["ap_conf"]["uci_ap_iface"],
+            ap_wifi_iface=config["ap_conf"]["ap_wifi_iface"],
+            ap_phy=config["ap_conf"]["ap_phy"],
+
+            ap_wifi_ip=config["ap_conf"]["ap_wifi_ip"],
+            ap_ctrl_ip=config["ap_conf"]["ap_ctrl_ip"],
+
+            cl_wifi_ip=config["client_conf"]["cl_wifi_ip"],
+            cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
+
+            execution_mode=config["execution_mode"],
+        )
+
+        return ap
 
     @debug_printer
     def set_ssh(self):
         # SSH Client connection
         self.client = get_client(self.control_target_ip)
+
+    @debug_printer
+    def close_ssh(self):
+        if self.client is not None:
+            self.client.close()
+
 
     @debug_printer
     def get_wifi_capabilities(self):
@@ -117,10 +142,14 @@ class Ap():
 
     @debug_printer
     def ap_status(self):
+        cmd = f"uci show.wireless.{self.uci_ap_iface}.disabled"
         if self.execution_mode == 1:
-            cmd = f"uci show.wireless.{self.uci_ap_iface}.disabled"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             if "uci: Entry not found" in result.stdout:
+                raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
+        if self.execution_mode == 0:
+            output = remote_execution(self.client, [cmd])
+            if "uci: Entry not found" in output.stdout:
                 raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
 
     @debug_printer

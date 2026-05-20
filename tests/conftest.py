@@ -1,3 +1,4 @@
+
 import pytest
 
 @pytest.fixture
@@ -49,3 +50,30 @@ def empty_fields_config():
             "fragmentation": None,
         },
     }
+
+class FakeClient():
+    def __init__(self,ip):
+        self.state = 0 #close
+        self.ip = ip
+    def open(self):
+        if self.state == 0:
+            self.state = 1
+
+    def close(self):
+        if self.state == 1:
+            self.state = 0
+
+    def get_state(self):
+        return self.state
+
+    def get_ip(self):
+        return self.ip
+
+@pytest.fixture
+def get_fake_client():
+    def fake_get_client(ip):
+        client = FakeClient(ip)
+        client.open()
+        return client
+
+    return fake_get_client

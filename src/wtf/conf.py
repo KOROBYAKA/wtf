@@ -1,5 +1,4 @@
 import tomllib
-from wtf.ap import Ap
 import ipaddress
 from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
 from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
@@ -54,21 +53,3 @@ def config_validation(config):
             except ValueError:
                 raise InvalidFieldError(field, value)
 
-def build_ap(config):
-    config_validation(config)
-
-    ap = Ap(
-        uci_ap_iface=config["ap_conf"]["uci_ap_iface"],
-        ap_wifi_iface=config["ap_conf"]["ap_wifi_iface"],
-        ap_phy=config["ap_conf"]["ap_phy"],
-
-        ap_wifi_ip=config["ap_conf"]["ap_wifi_ip"],
-        ap_ctrl_ip=config["ap_conf"]["ap_ctrl_ip"],
-
-        cl_wifi_ip=config["client_conf"]["cl_wifi_ip"],
-        cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
-
-        execution_mode=config["execution_mode"],
-    )
-
-    return ap
