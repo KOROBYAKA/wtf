@@ -1,6 +1,25 @@
+class APError(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)
+
 class ConfigError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
+
+class APDisabledError(APError):
+    def __init__(self,msg):
+        self.msg = msg
+        super().__init__(self.msg)
+
+    def __str__(self):
+        return f"{self.msg}"
+
+class InvalidIPAddressError(APError):
+    def __init__(self,msg):
+        self.msg = msg
+        super().__init__(self.msg)
+    def __str__(self):
+        return f"{self.msg}"
 
 class MissingFieldError(ConfigError):
     def __init__(self, section_name, field_name):

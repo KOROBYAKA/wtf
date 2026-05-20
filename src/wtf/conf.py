@@ -1,14 +1,12 @@
 import tomllib
-from ap import Ap
 import ipaddress
-from tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
-from errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
-
-
+from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
+from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
 def load_config():
     with open("conf.toml", mode="rb") as fp:
         config = tomllib.load(fp)
+        return config
 
 def check_defaults(defaults):
     command = [f'-t {defaults["timeout"]}']
@@ -27,8 +25,8 @@ def check_defaults(defaults):
 
 def config_validation(config):
 
-    if config["execution_mode"] not in (0, 1):
-        raise InvalidFieldError("execution_mode", config["execution_mode"])
+    if "execution_mode" not in config.keys():
+        raise MissingFieldError("ROOT","execution_mode")
 
     for section, fields in REQUIRED_FIELDS.items():
         if section not in config:
@@ -37,35 +35,21 @@ def config_validation(config):
             if field not in config[section]:
                 raise MissingFieldError(section, field)
 
+    if config["execution_mode"] not in (0, 1):
+        raise InvalidFieldError("execution_mode", config["execution_mode"])
+
+    used_ips = {}
+
     for section, fields in IP_FIELDS.items():
         for field in fields:
             value = config[section][field]
             try:
                 ipaddress.ip_address(value)
+                if value in used_ips.keys():
+                    prev_field, prev_section = used_ips[value]
+                    raise ConfigConflictError(
+                        f"The value {value} for field {field} in section {section} is already used by the field {prev_field} in section {prev_section}.Values for all IP addresses must be different")
+                used_ips[value] = (section, field)
             except ValueError:
                 raise InvalidFieldError(field, value)
 
-    if config["ap_conf"]["ap_wifi_ip"] == config["client_conf"]["cl_wifi_ip"]:
-        raise ConfigConflictError("ap_wifi_ip and cl_wifi_ip must be different")
-
-    if config["ap_conf"]["ap_ctrl_ip"] == config["client_conf"]["cl_ctrl_ip"]:
-        raise ConfigConflictError("ap_ctrl_ip and cl_ctrl_ip must be different")
-
-def build_ap(config):
-    config_validation(config)
-
-    ap = Ap(
-        uci_ap_iface=config["ap_conf"]["uci_ap_iface"],
-        ap_wifi_iface=config["ap_conf"]["ap_wifi_iface"],
-        ap_phy=config["ap_conf"]["ap_phy"],
-
-        ap_wifi_ip=config["ap_conf"]["ap_wifi_ip"],
-        ap_ctrl_ip=config["ap_conf"]["ap_ctrl_ip"],
-
-        cl_wifi_ip=config["client_conf"]["cl_wifi_ip"],
-        cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
-
-        execution_mode=config["execution_conf"]["execution_mode"],
-    )
-
-    return ap
