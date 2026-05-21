@@ -1,7 +1,8 @@
 import subprocess
-from wtf.tooling import run_cmd, debug_printer
+import ipaddress
+from wtf.tooling import run_cmd, debug_printer, connection_status
 from wtf.ssh_connection import get_client, remote_execution
-from wtf.errors import APDisabledError
+from wtf.errors import APDisabledError, InvalidIPAddressError
 from wtf.conf import config_validation
 
 class Ap():
@@ -64,6 +65,19 @@ class Ap():
         )
 
         return ap
+
+    @debug_printer
+    def ip_access_check(self):
+        if not connection_status(self.local_wifi_ip, "127.0.0.1"):
+            raise InvalidIPAddressError(f"{self.local_wifi_ip} is offline or not reachable! Check connectivity or configuration.")
+
+        if not connection_status(self.control_target_ip):
+            raise InvalidIPAddressError(
+                f"{self.control_target_ip} is offline or not reachable! Check connectivity or configuration.")
+
+        if not connection_status(self.remote_wifi_ip, self.local_wifi_ip):
+            raise InvalidIPAddressError(
+                f"{self.remote_wifi_ip} is offline or not reachable! Check connectivity or configuration.")
 
     @debug_printer
     def set_ssh(self):
@@ -149,7 +163,7 @@ class Ap():
                 raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
         if self.execution_mode == 0:
             output = remote_execution(self.client, [cmd])
-            if "uci: Entry not found" in output.stdout:
+            if "link becomes ready" in output:
                 raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
 
     @debug_printer
@@ -163,7 +177,7 @@ class Ap():
 
         if self.execution_mode == 0:
             output = remote_execution(self.client,[cmd])[0]
-            if output.find("link becomes ready"):
+            if "link becomes ready" in output:
                 return True
             return False
 
