@@ -15,7 +15,7 @@ def test_ap_execution_mode_0(valid_config):
 
 def test_ap_execution_mode_1(valid_config):
     config = deepcopy(valid_config)
-    config["execution_mode"] = 0
+    config["execution_mode"] = 1
     ap = Ap.build_ap(config)
 
     assert ap.execution_mode == 1

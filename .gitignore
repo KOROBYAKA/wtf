@@ -1,13 +1,16 @@
+#conf files
+src/conf.toml
+conf.toml
+conf.toml.example
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-src/conf.toml
-conf.toml
 # C extensions
 *.so
 .idea/
-.gitignore
+
 # Distribution / packaging
 .Python
 build/

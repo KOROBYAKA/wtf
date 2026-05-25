@@ -38,7 +38,7 @@ def connection_status(target_ip, bind_ip = 0):
     try:
         ipaddress.ip_address(target_ip)
     except ValueError:
-        raise InvalidIPAddressError(f"{target_ip} is not a valid IP address that can bi pinged")
+        raise InvalidIPAddressError(f"{target_ip} is not a valid IP address that can be pinged")
 
     if bind_ip:
         cmd = [f"ping {target_ip} -c 1 -W 1 -I {bind_ip}"]
@@ -70,3 +70,4 @@ def debug_printer(func):
         return func(*args, **kwargs)
 
     return wrapper
+

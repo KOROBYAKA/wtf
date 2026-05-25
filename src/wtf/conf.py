@@ -1,10 +1,12 @@
 import tomllib
 import ipaddress
+import pathlib
 from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
 from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
-def load_config():
-    with open("conf.toml", mode="rb") as fp:
+def load_config(path):
+    print(type(path), path)
+    with open(pathlib.Path(path), mode="rb") as fp:
         config = tomllib.load(fp)
         return config
 
@@ -53,3 +55,27 @@ def config_validation(config):
             except ValueError:
                 raise InvalidFieldError(field, value)
 
+    if config["ap_conf"]["ap_wifi_ip"] == config["client_conf"]["cl_wifi_ip"]:
+        raise ConfigConflictError("ap_wifi_ip and cl_wifi_ip must be different")
+
+    if config["ap_conf"]["ap_ctrl_ip"] == config["client_conf"]["cl_ctrl_ip"]:
+        raise ConfigConflictError("ap_ctrl_ip and cl_ctrl_ip must be different")
+
+def build_ap(config):
+    config_validation(config)
+
+    ap = Ap(
+        uci_ap_iface=config["ap_conf"]["uci_ap_iface"],
+        ap_wifi_iface=config["ap_conf"]["ap_wifi_iface"],
+        ap_phy=config["ap_conf"]["ap_phy"],
+
+        ap_wifi_ip=config["ap_conf"]["ap_wifi_ip"],
+        ap_ctrl_ip=config["ap_conf"]["ap_ctrl_ip"],
+
+        cl_wifi_ip=config["client_conf"]["cl_wifi_ip"],
+        cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
+
+        execution_mode=config["execution_conf"]["execution_mode"],
+    )
+
+    return ap

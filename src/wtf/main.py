@@ -1,22 +1,31 @@
 #!/usr/bin/python3
 
 import time
+import argparse
 from wtf.conf import load_config, check_defaults
 from wtf.tooling import connection_status
 from wtf.results import print_results
+from wtf.ap import Ap
+from wtf.cli import get_parser, parse
 
 
 def main():
     final_result = {}
 
-    config = load_config()
-    AP = build_ap(config)
+    parser = get_parser()
+    args = parse(parser)
+
+    #Configuring AccessPoint object for AP control
+    config = load_config(args.config)
+    AP = Ap.build_ap(config)
     AP.iperf_cmd = check_defaults(config["defaults"])
+    AP.ip_access_check()
     AP.set_ssh()
     AP.ap_status()
     wifi_channels,ht_modes = AP.get_wifi_capabilities()
     #wifi_channels = ['1','2']
     #ht_modes = ['HT20','HT40']
+
     print("Starting tests")
     for channel in wifi_channels:
         final_result[channel] = {}
