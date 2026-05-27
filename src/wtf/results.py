@@ -5,14 +5,14 @@ import os
 
 def save_json(path, final_result, metadata):
 
-    output_file = path.joinpath("/results.json")
-    metadata = path.joinpath("/metadata.json")
+    output_file = path.joinpath("results.json")
+    metadata_path = path.joinpath("metadata.json")
     with open(output_file, "w") as f:
         json.dump(final_result, f, indent=4)
 
-    with open(metadata, "w") as f:
-        json.dump(metadata, f)
-    print(f"Saved test results to {output_file}")
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=4)
+    print(f"Test results are saved to {output_file}")
 
 def print_results(final_result, htmodes, channels, timeout):
     for channel in channels:

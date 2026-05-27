@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 
 import time
-import argparse
 from wtf.conf import load_config, check_defaults, config_validation
-from wtf.tooling import connection_status
-from wtf.results import print_results
+from wtf.tooling import connection_status, set_debug
+from wtf.results import print_results, save_results
 from wtf.ap import Ap
 from wtf.cli import get_parser, parse
 
@@ -14,6 +13,7 @@ def main():
 
     parser = get_parser()
     args = parse(parser)
+    set_debug(args.debug)
     if args.command == "check-config":
         config = load_config(args.config)
         config_validation(config)
@@ -21,6 +21,7 @@ def main():
         return 0
 
     elif args.command == "run":
+
         #Configuring AccessPoint object for AP control
         config = load_config(args.config)
         AP = Ap.build_ap(config)
@@ -28,6 +29,7 @@ def main():
         AP.ip_access_check()
         AP.set_ssh()
         AP.ap_status()
+        metadata = AP.generate_metadata()
         wifi_channels,ht_modes = AP.get_wifi_capabilities()
         #wifi_channels = ['1','2']
         #ht_modes = ['HT20','HT40']
@@ -56,8 +58,8 @@ def main():
                 final_result[channel][ht_mode] = result
         if AP.client != None:
             AP.client.close()
-        #print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
-        #save_output(final_result)
+        print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
+        save_results(format="json",final_result=final_result,metadata=metadata)
         return 0
 
 
