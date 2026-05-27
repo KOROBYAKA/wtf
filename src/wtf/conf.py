@@ -5,7 +5,6 @@ from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
 from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
 def load_config(path):
-    print(type(path), path)
     with open(pathlib.Path(path), mode="rb") as fp:
         config = tomllib.load(fp)
         return config
