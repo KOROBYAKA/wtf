@@ -8,6 +8,11 @@ packages = ["src/wtf"]
 [project.scripts]
 wtf = "wtf.main:main"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
 [project]
 name = "WTF"
 version = "0.0.1"
