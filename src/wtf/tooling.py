@@ -4,6 +4,12 @@ from functools import wraps
 import ipaddress
 from wtf.errors import InvalidIPAddressError
 
+_debug_enabled = False
+
+def set_debug(enabled: bool) -> None:
+    global _debug_enabled
+    _debug_enabled = enabled
+
 REQUIRED_ROOT_FIELDS = [
     "execution_mode",
 ]
@@ -65,8 +71,9 @@ def run_cmd(cmd:str):
 def debug_printer(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print("#DEBUG")
-        print(f"Executing: {func.__name__}")
+        if _debug_enabled:
+            print("#DEBUG")
+            print(f"Executing: {func.__name__}")
         return func(*args, **kwargs)
 
     return wrapper

@@ -1,15 +1,16 @@
 import tomllib
 import ipaddress
 import pathlib
-from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS
+from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS, debug_printer
 from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
+@debug_printer
 def load_config(path):
-    print(type(path), path)
     with open(pathlib.Path(path), mode="rb") as fp:
         config = tomllib.load(fp)
         return config
 
+@debug_printer
 def check_defaults(defaults):
     command = [f'-t {defaults["timeout"]}']
     if "bandwidth" in defaults:
@@ -25,6 +26,7 @@ def check_defaults(defaults):
 
     return ' '.join(command)
 
+@debug_printer
 def config_validation(config):
 
     if "execution_mode" not in config.keys():
@@ -60,22 +62,3 @@ def config_validation(config):
 
     if config["ap_conf"]["ap_ctrl_ip"] == config["client_conf"]["cl_ctrl_ip"]:
         raise ConfigConflictError("ap_ctrl_ip and cl_ctrl_ip must be different")
-
-def build_ap(config):
-    config_validation(config)
-
-    ap = Ap(
-        uci_ap_iface=config["ap_conf"]["uci_ap_iface"],
-        ap_wifi_iface=config["ap_conf"]["ap_wifi_iface"],
-        ap_phy=config["ap_conf"]["ap_phy"],
-
-        ap_wifi_ip=config["ap_conf"]["ap_wifi_ip"],
-        ap_ctrl_ip=config["ap_conf"]["ap_ctrl_ip"],
-
-        cl_wifi_ip=config["client_conf"]["cl_wifi_ip"],
-        cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
-
-        execution_mode=config["execution_conf"]["execution_mode"],
-    )
-
-    return ap
