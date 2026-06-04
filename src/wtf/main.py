@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import time
-from importlib.metadata import metadata
 
 from wtf.conf import load_config, check_defaults, config_validation
 from wtf.tooling import set_debug
