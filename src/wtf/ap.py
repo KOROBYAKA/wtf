@@ -1,7 +1,7 @@
 import subprocess
 from wtf.tooling import run_cmd, debug_printer, connection_status
 from wtf.ssh_connection import get_client, remote_execution
-from wtf.errors import APDisabledError, InvalidIPAddressError
+from wtf.errors import InvalidIPAddressError
 from wtf.conf import config_validation
 
 class Ap():
@@ -119,7 +119,8 @@ class Ap():
     def set_wifi_capabilities_OpenWrt(self,channel:int, ht_mode:str):
         #Due to the target OS is an OpenWRT, UCI configuration interface
         #is used to set up desirable Wi-Fi Capabilities
-        #If you want use it on another
+        #If you want use it on another OS
+        #Customize it to the hostapd
         cmds = [f"uci set wireless.{self.uci_ap_iface}.channel='{channel}'",
                 f"uci set wireless.{self.uci_ap_iface}.htmode='{ht_mode}'",
                 "uci commit",
@@ -154,31 +155,30 @@ class Ap():
         return result
 
     @debug_printer
-    def ap_status(self):
-        cmd = f"uci show.wireless.{self.uci_ap_iface}.disabled"
+    def ap_preflight_check_OpenWrt(self):
+        cmds = [
+            f"uci -q show wireless.{self.uci_ap_iface}",
+            f"iw {self.ap_wifi_iface} info",
+            f"iwinfo {self.ap_phy} info"
+        ]
         if self.execution_mode == 1:
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if "uci: Entry not found" in result.stdout:
-                raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
+            for cmd in cmds:
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                if result.returncode != 0:
+                    return False
+            return True
+
         if self.execution_mode == 0:
-            output = remote_execution(self.client, [cmd])
-            if "link becomes ready" in output:
-                raise APDisabledError(f"The Access Point {self.uci_ap_iface} is disabled (check UCI and config)")
+            _, codes = remote_execution(self.client,cmds)
+            if sum(codes) != 0:
+                return False
+            return True
+
+        return False
 
     @debug_printer
     def ap_link_status(self):
-        cmd = "dmesg | tail -n 10"
-        if self.execution_mode == 1:
-            result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if result.stdout.find("link becomes ready"):
-                return True
-            return False
-
-        if self.execution_mode == 0:
-            output = remote_execution(self.client,[cmd])[0]
-            if "link becomes ready" in output:
-                return True
-            return False
+        pass
 
     @debug_printer
     def run_test(self, timeout):
