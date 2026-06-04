@@ -1,7 +1,7 @@
 import tomllib
 import ipaddress
 import pathlib
-from wtf.tooling import REQUIRED_FIELDS, REQUIRED_ROOT_FIELDS, IP_FIELDS, debug_printer
+from wtf.tooling import REQUIRED_FIELDS, IP_FIELDS, debug_printer
 from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
 @debug_printer
@@ -20,9 +20,9 @@ def check_defaults(defaults):
     if "bidir" in defaults and defaults["bidir"] == 1:
         command.append("--bidir")
     if "fragmentation" in defaults and defaults["fragmentation"] == 0:
-        command.append(f"--dont-fragment")
+        command.append("--dont-fragment")
     if "reverse" in defaults and defaults["reverse"] == 1:
-        command.append(f"--reverse")
+        command.append("--reverse")
 
     return ' '.join(command)
 

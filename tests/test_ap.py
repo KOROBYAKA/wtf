@@ -1,4 +1,3 @@
-import pytest
 from wtf.ap import Ap
 import wtf.ap as ap_module
 from copy import deepcopy

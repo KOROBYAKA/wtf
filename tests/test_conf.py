@@ -1,7 +1,7 @@
 import pytest
 from copy import deepcopy
 from wtf.conf import config_validation, check_defaults
-from wtf.errors import InvalidFieldError, MissingFieldError, MissingSectionError, ConfigConflictError
+from wtf.errors import InvalidFieldError, MissingFieldError, ConfigConflictError
 
 def test_valid_config_passes(valid_config):
     config_validation(valid_config)

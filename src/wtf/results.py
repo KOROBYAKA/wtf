@@ -29,7 +29,7 @@ def print_results(final_result, htmodes, channels, timeout):
                 value = final_result[channel][htmode]['tx_bytes'] / (timeout * 1024)
                 formatted = f"{value:.2f}kB/s"
                 tx_res.append(f" {formatted:^13} ")
-            except:
+            except Exception:
                 continue
         print("HT MODE  |","|".join(ht))
         print("TX BYTES |","|".join(tx_res))

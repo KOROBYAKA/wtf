@@ -1,7 +1,6 @@
 import pytest
 from wtf.results import save_results, save_json
 import json
-import datetime
 
 def test_save_json_saving_some_data_and_metadata(tmp_path):
     results_data = {
