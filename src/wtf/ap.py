@@ -189,7 +189,8 @@ class Ap():
     def run_test(self, timeout):
         net_data_before_test = self.getter()
         _, _ = remote_execution(client =self.client, cmds = ["iperf3 -s -D"])
-        run_cmd(self.iperf_cmd)
+        iperf_cmd = f"iperf3 -c {self.remote_wifi_ip}  {self.iperf_cmd}"
+        run_cmd(iperf_cmd)
         net_data_after_test = self.getter()
         _, _ = remote_execution(client = self.client, cmds = ["killall iperf3"])
 
