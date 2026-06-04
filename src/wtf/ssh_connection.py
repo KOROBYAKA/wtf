@@ -20,9 +20,10 @@ def get_client(target_ip):
 @debug_printer
 def remote_execution(client, cmds):
     results = []
-
+    result_codes = []
     for cmd in cmds:
         _, stdout, _ = client.exec_command(cmd)
         results.append(stdout.read().decode().strip())
+        result_codes.append(stdout.channel.recv_exit_status())
 
-    return results
+    return results, result_codes

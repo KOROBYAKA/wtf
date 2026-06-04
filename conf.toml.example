@@ -38,9 +38,8 @@ packet_length = 0
 # Bidirectional: 1 - bidirectional / 0 - unidirectional
 bidir = 0
 
-# By default, AP transceives data to the host with this application
-# reverse = 0 --> AP = TX & host = RX
-# reverse = 1 --> AP = RX & host = TX
+# By default, the host running WTF acts like TX for iPerf3
+# Setting reverse to 1 make it act as a RX
 reverse = 0
 
 # Packet fragmentation function performed by iperf3
