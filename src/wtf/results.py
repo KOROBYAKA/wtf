@@ -36,15 +36,19 @@ def print_results(final_result, htmodes, channels, timeout):
         print("RX BYTES |","|".join(rx_res))
 
 def save_results(format, final_result, metadata):
-    path = Path.cwd()
-    base_dir = path.joinpath("/results")
-    if not base_dir.exists():
-        os.mkdir(str(base_dir))
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    res_dir = base_dir.joinpath(timestamp)
-    if not res_dir.exists():
-        os.mkdir(str(res_dir))
+    supported_formats = ["json"]
+    if format in supported_formats:
+        path = Path.cwd()
+        base_dir = path.joinpath("results")
+        if not base_dir.exists():
+            os.mkdir(str(base_dir))
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        res_dir = base_dir.joinpath(timestamp)
+        if not res_dir.exists():
+            os.mkdir(str(res_dir))
 
-    if format == "json":
-        save_json(res_dir, final_result, metadata)
+        if format == "json":
+            save_json(res_dir, final_result, metadata)
+    else:
+        raise ValueError("Supported formats: {}".format(supported_formats))
 
