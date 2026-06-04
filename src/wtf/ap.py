@@ -35,10 +35,12 @@ class Ap():
             self.local_wifi_ip = self.ap_wifi_ip
             self.remote_wifi_ip = self.cl_wifi_ip
             self.control_target_ip = self.cl_ctrl_ip
+            self.control_local_ip = self.ap_ctrl_ip
         elif execution_mode == 0:
             self.local_wifi_ip = self.cl_wifi_ip
             self.remote_wifi_ip = self.ap_wifi_ip
             self.control_target_ip = self.ap_ctrl_ip
+            self.control_local_ip = self.cl_ctrl_ip
         else:
             raise ValueError("execution_mode must be 1 for AP mode or 0 for client mode")
 
@@ -177,8 +179,11 @@ class Ap():
         return False
 
     @debug_printer
-    def ap_link_status(self):
-        pass
+    def link_status(self):
+        if connection_status(self.control_local_ip, self.control_target_ip):
+            return connection_status(self.local_wifi_ip, self.remote_wifi_ip)
+
+        return False
 
     @debug_printer
     def run_test(self, timeout):

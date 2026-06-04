@@ -2,7 +2,7 @@
 
 import time
 from wtf.conf import load_config, check_defaults, config_validation
-from wtf.tooling import connection_status, set_debug
+from wtf.tooling import set_debug
 from wtf.results import print_results, save_results
 from wtf.ap import Ap
 from wtf.cli import get_parser, parse
@@ -35,6 +35,7 @@ def main():
         #ht_modes = ['HT20','HT40']
 
         print("Starting tests")
+        AP.ap_preflight_check_OpenWrt()
         for channel in wifi_channels:
             final_result[channel] = {}
             for ht_mode in ht_modes:
@@ -43,7 +44,7 @@ def main():
                 time.sleep(5)
                 skip = False
                 for x in range(0,4):
-                    if connection_status(AP.remote_wifi_ip, AP.local_wifi_ip) and AP.ap_link_status():
+                    if AP.link_status():
                         break
                     else:
                         if x == 3:
