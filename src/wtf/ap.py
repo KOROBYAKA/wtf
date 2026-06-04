@@ -1,5 +1,4 @@
 import subprocess
-import ipaddress
 from wtf.tooling import run_cmd, debug_printer, connection_status
 from wtf.ssh_connection import get_client, remote_execution
 from wtf.errors import APDisabledError, InvalidIPAddressError
@@ -168,7 +167,7 @@ class Ap():
 
     @debug_printer
     def ap_link_status(self):
-        cmd = f"dmesg | tail -n 10"
+        cmd = "dmesg | tail -n 10"
         if self.execution_mode == 1:
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
             if result.stdout.find("link becomes ready"):

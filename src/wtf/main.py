@@ -53,10 +53,11 @@ def main():
                         else:
                             print("AP is offline, waiting for set up time")
                             time.sleep(5+x*5)
-                if skip: continue
+                if skip:
+                    continue
                 result = AP.run_test(config["defaults"]["timeout"])
                 final_result[channel][ht_mode] = result
-        if AP.client != None:
+        if AP.client is not None:
             AP.client.close()
         print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
         save_results(format="json",final_result=final_result,metadata=metadata)
