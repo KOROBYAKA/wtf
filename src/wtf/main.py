@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import time
+from importlib.metadata import metadata
+
 from wtf.conf import load_config, check_defaults, config_validation
 from wtf.tooling import set_debug
 from wtf.results import print_results, save_results
@@ -27,16 +29,14 @@ def main():
         AP = Ap.build_ap(config)
         AP.iperf_cmd = check_defaults(config["defaults"])
         AP.ip_access_check()
-        AP.ap_preflight_check_OpenWrt()
         AP.set_ssh()
         AP.link_status()
-        metadata = AP.generate_metadata()
-        del metadata["client"]
-        AP.client.close()
-        AP.client = None
+        AP.ap_preflight_check_OpenWrt()
+        #metadata = AP.generate_metadata()
+        #del metadata["client"]
         wifi_channels,ht_modes = AP.get_wifi_capabilities()
-        #wifi_channels = ['1','2']
-        #ht_modes = ['HT20','HT40']
+        #wifi_channels = ['1']
+        #ht_modes = ['HT20']
 
         print("Starting tests")
 
@@ -62,8 +62,11 @@ def main():
                     continue
                 result = AP.run_test(config["defaults"]["timeout"])
                 final_result[channel][ht_mode] = result
+
         if AP.client is not None:
             AP.client.close()
+        del AP.client
+        metadata = AP.generate_metadata()
         print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
         save_results(format="json",final_result=final_result,metadata=metadata)
         return 0
