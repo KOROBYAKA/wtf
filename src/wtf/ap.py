@@ -107,7 +107,7 @@ class Ap():
                     raise SystemExit(1)
 
         if self.execution_mode == 0:
-                output = remote_execution(client = self.client, cmds = cmds)
+                output, _ = remote_execution(client = self.client, cmds = cmds)
                 for line in output[1].split("\n"):
                     try:
                         wifi_channels_list.append(line.strip(" *()\\|/").split(" ")[6].strip(")"))
@@ -132,7 +132,7 @@ class Ap():
                 subprocess.run(cmd, shell=True, check=True, text=True)
 
         if self.execution_mode == 0:
-            _ = remote_execution(client = self.client, cmds = cmds)
+            _, _ = remote_execution(client = self.client, cmds = cmds)
 
     @debug_printer
     def getter(self):
@@ -151,7 +151,7 @@ class Ap():
 
         if self.execution_mode == 0:
             for arg, cmd in cmds.items():
-                output = remote_execution(self.client, [cmd])
+                output, _ = remote_execution(self.client, [cmd])
                 result[arg] = output[0]
 
         return result
@@ -180,18 +180,18 @@ class Ap():
 
     @debug_printer
     def link_status(self):
-        if connection_status(self.control_local_ip, self.control_target_ip):
-            return connection_status(self.local_wifi_ip, self.remote_wifi_ip)
+        if connection_status(self.control_target_ip, self.control_local_ip):
+            return connection_status(self.remote_wifi_ip, self.local_wifi_ip)
 
         return False
 
     @debug_printer
     def run_test(self, timeout):
         net_data_before_test = self.getter()
-        _ = remote_execution(client =self.client, cmds = ["iperf3 -s -D"])
-        run_cmd(f"iperf3 -c {self.remote_wifi_ip} -B {self.local_wifi_ip} -b 0 -t {timeout}")
+        _, _ = remote_execution(client =self.client, cmds = ["iperf3 -s -D"])
+        run_cmd(self.iperf_cmd)
         net_data_after_test = self.getter()
-        _ = remote_execution(client = self.client, cmds = ["killall iperf3"])
+        _, _ = remote_execution(client = self.client, cmds = ["killall iperf3"])
 
         #results calculation
         delta = {}

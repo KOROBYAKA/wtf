@@ -27,15 +27,19 @@ def main():
         AP = Ap.build_ap(config)
         AP.iperf_cmd = check_defaults(config["defaults"])
         AP.ip_access_check()
+        AP.ap_preflight_check_OpenWrt()
         AP.set_ssh()
-        AP.ap_status()
+        AP.link_status()
         metadata = AP.generate_metadata()
+        del metadata["client"]
+        AP.client.close()
+        AP.client = None
         wifi_channels,ht_modes = AP.get_wifi_capabilities()
         #wifi_channels = ['1','2']
         #ht_modes = ['HT20','HT40']
 
         print("Starting tests")
-        AP.ap_preflight_check_OpenWrt()
+
         for channel in wifi_channels:
             final_result[channel] = {}
             for ht_mode in ht_modes:
