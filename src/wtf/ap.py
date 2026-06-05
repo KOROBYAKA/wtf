@@ -4,6 +4,7 @@ from wtf.ssh_connection import get_client, remote_execution
 from wtf.errors import InvalidIPAddressError
 from wtf.conf import config_validation
 
+
 class Ap():
     def __init__(self,
         uci_ap_iface: str,
