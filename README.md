@@ -35,15 +35,15 @@
   ### Check the configuration
   wtf check-config allows user to check if the configuration in given path is valid, the basic file for configuration to check is the conf.toml (conf example can be found from the conf.toml.example).
 
-  ```wtf check-config [-c,--debug, -v]```
+  ```wtf check-config --config conf.toml```
   ### Preflight check
-  ```wtf preflight [-c,--debug, -v]```
+  ```wtf preflight --config conf.toml```
 
   ### Run
   wtf run executes the test.
   
 
-  ```wtf run [-c,--debug, -v]```
+  ```wtf run --config conf.toml```
 
 
   ## Roadmap

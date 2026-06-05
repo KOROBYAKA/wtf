@@ -29,11 +29,11 @@ def main():
         AP.ip_access_check()
         AP.set_ssh()
         if not AP.link_status():
-            raise Exception("link_status: False\nSome IP addresses are not available.")
+            raise RuntimeError("link_status: False\nSome IP addresses are not available.")
         if not AP.ap_preflight_check_OpenWrt():
-            raise Exception("AP_PREFLIGHT_CHECK_OPENWRT didn't pass. Check the config and connectivity.")
+            raise RuntimeError("AP_PREFLIGHT_CHECK_OPENWRT didn't pass. Check the config and connectivity.")
 
-        print("Config and setup are valid.\Can start the test with:wtf run [-c,--debug]")
+        print("Config and setup are valid.\nCan start the test with:wtf run [-c,--debug]")
 
     elif args.command == "run":
 
