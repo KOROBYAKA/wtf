@@ -29,8 +29,10 @@ def main():
         AP.iperf_cmd = check_defaults(config["defaults"])
         AP.ip_access_check()
         AP.set_ssh()
-        AP.link_status()
-        AP.ap_preflight_check_OpenWrt()
+        if not AP.link_status():
+            raise Exception("link_status: False\nSome IP addresses are not available.")
+        if not AP.ap_preflight_check_OpenWrt():
+            raise Exception("AP_PREFLIGHT_CHECK_OPENWRT didn't pass. Check the config and connectivity.")
         #metadata = AP.generate_metadata()
         #del metadata["client"]
         wifi_channels,ht_modes = AP.get_wifi_capabilities()
@@ -64,7 +66,6 @@ def main():
 
         if AP.client is not None:
             AP.client.close()
-        del AP.client
         metadata = AP.generate_metadata()
         print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
         save_results(format="json",final_result=final_result,metadata=metadata)
