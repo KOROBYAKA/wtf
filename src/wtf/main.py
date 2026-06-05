@@ -21,6 +21,20 @@ def main():
         print(f"Provided configuration file path is: {args.config}\nConfig is valid.")
         return 0
 
+    elif args.command == "preflight":
+        config = load_config(args.config)
+        config_validation(config)
+        AP = Ap.build_ap(config)
+        AP.iperf_cmd = check_defaults(config["defaults"])
+        AP.ip_access_check()
+        AP.set_ssh()
+        if not AP.link_status():
+            raise Exception("link_status: False\nSome IP addresses are not available.")
+        if not AP.ap_preflight_check_OpenWrt():
+            raise Exception("AP_PREFLIGHT_CHECK_OPENWRT didn't pass. Check the config and connectivity.")
+
+        print("Config and setup are valid.\Can start the test with:wtf run [-c,--debug]")
+
     elif args.command == "run":
 
         #Configuring AccessPoint object for AP control

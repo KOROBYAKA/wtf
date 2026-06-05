@@ -6,6 +6,11 @@ def get_parser():
                         prog='WTF - Wi-Fi Test Framework',
                         description='Wi-Fi Test Framework. Full documentation: github.com/KOROBYAKA/WTF')
     subparsers = parser.add_subparsers(dest="command", help='subcommand help', required=True,)
+    #Adding parser for preflight check
+    parser_preflight = subparsers.add_parser('preflight',help='WTF check if the setup is ok')
+    parser_preflight.add_argument('-c', '--config',help="Path to config file", default="conf.toml")
+    parser_preflight.add_argument('--debug', default=False, action='store_true')
+
 
     #Adding subparser for check-config
     parser_conf_check = subparsers.add_parser('check-config', help='WTF check config if it is valid')
@@ -18,6 +23,7 @@ def get_parser():
     parser_run.add_argument('--debug', default=False, action='store_true')
 
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
+
 
 
     return parser
