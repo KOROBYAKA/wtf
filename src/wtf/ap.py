@@ -69,8 +69,12 @@ class Ap():
 
     @debug_printer
     def ip_access_check(self):
-        if not connection_status(self.local_wifi_ip, "127.0.0.1"):
+        if not connection_status(self.local_wifi_ip):
             raise InvalidIPAddressError(f"{self.local_wifi_ip} is offline or not reachable! Check connectivity or configuration.")
+
+        if not connection_status(self.control_local_ip):
+            raise InvalidIPAddressError(
+                f"{self.control_local_ip} is offline or not reachable! Check connectivity or configuration.")
 
         if not connection_status(self.control_target_ip):
             raise InvalidIPAddressError(
@@ -203,7 +207,25 @@ class Ap():
 
     @debug_printer
     def generate_metadata(self) -> dict:
-        return self.__dict__
+        return {
+            "execution_mode": self.execution_mode,
+
+            "uci_ap_iface": self.uci_ap_iface,
+            "ap_wifi_iface": self.ap_wifi_iface,
+            "ap_phy": self.ap_phy,
+
+            "ap_wifi_ip": self.ap_wifi_ip,
+            "ap_ctrl_ip": self.ap_ctrl_ip,
+            "cl_wifi_ip": self.cl_wifi_ip,
+            "cl_ctrl_ip": self.cl_ctrl_ip,
+
+            "local_wifi_ip": self.local_wifi_ip,
+            "remote_wifi_ip": self.remote_wifi_ip,
+            "control_local_ip": self.control_local_ip,
+            "control_target_ip": self.control_target_ip,
+
+            "iperf_cmd": self.iperf_cmd,
+        }
 
 
 
