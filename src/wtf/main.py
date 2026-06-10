@@ -1,9 +1,7 @@
 #!/usr/bin/python3
-
 import time
-
-from wtf.conf import load_config, check_defaults, config_validation
-from wtf.tooling import set_debug
+from wtf.conf import load_config, config_validation
+from wtf.tooling import set_debug, get_directions
 from wtf.results import print_results, save_results
 from wtf.ap import Ap
 from wtf.cli import get_parser, parse
@@ -25,7 +23,7 @@ def main():
         config = load_config(args.config)
         config_validation(config)
         AP = Ap.build_ap(config)
-        AP.iperf_cmd = check_defaults(config["defaults"])
+        AP.set_iperf_cmd(config["iperf_args"])
         AP.ip_access_check()
         AP.set_ssh()
         if not AP.link_status():
@@ -40,7 +38,9 @@ def main():
         #Configuring AccessPoint object for AP control
         config = load_config(args.config)
         AP = Ap.build_ap(config)
-        AP.iperf_cmd = check_defaults(config["defaults"])
+        AP.make_iperf_cmd(config["iperf_args"])
+        directions = get_directions(config["directions"],config["execution_mode"])
+        AP.set_ping_args(config["ping_args"])
         AP.ip_access_check()
         AP.set_ssh()
         if not AP.link_status():
@@ -75,8 +75,10 @@ def main():
                             time.sleep(5+x*5)
                 if skip:
                     continue
-                result = AP.run_test(config["defaults"]["timeout"])
-                final_result[channel][ht_mode] = result
+                for direction, direction_flag in directions:
+                    for transport in config["transports"]:
+                        result = AP.run_test(direction_flag, transport)
+                        final_result[str(channel)][str(ht_mode)][direction][transport] = result
 
         if AP.client is not None:
             AP.client.close()
