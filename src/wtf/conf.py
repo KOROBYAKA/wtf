@@ -4,27 +4,34 @@ import pathlib
 from wtf.tooling import REQUIRED_FIELDS, IP_FIELDS, debug_printer
 from wtf.errors import MissingFieldError, InvalidFieldError, ConfigConflictError, MissingSectionError
 
+#Reads .toml config on specified path
+#Retuns dict
 @debug_printer
 def load_config(path):
     with open(pathlib.Path(path), mode="rb") as fp:
         config = tomllib.load(fp)
         return config
 
-@debug_printer
-def check_defaults(defaults):
-    command = [f'-t {defaults["timeout"]}']
-    if "bandwidth" in defaults:
-        command.append(f"-b {defaults['bandwidth']}")
-    if "packet_length" in defaults:
-        command.append(f"-l {defaults['packet_length']}")
-    if "bidir" in defaults and defaults["bidir"] == 1:
-        command.append("--bidir")
-    if "fragmentation" in defaults and defaults["fragmentation"] == 0:
-        command.append("--dont-fragment")
-    if "reverse" in defaults and defaults["reverse"] == 1:
-        command.append("--reverse")
 
-    return ' '.join(command)
+#Returns a command to run iperf
+@debug_printer
+def build_iperf_cmd(args, src_ip, dst_ip):
+    command = ["iperf3", "-c", f"{dst_ip}", f"-B {src_ip}", f"-t {args["timeout"]}", "-J"]
+    if "bandwidth" in args:
+        command.append(f"-b {args['bandwidth']}")
+    if "packet_length" in args:
+        command.append(f"-l {args['packet_length']}")
+    if "fragmentation" in args and args["fragmentation"] == 0:
+        command.append("--dont-fragment")
+
+    return command, args["timeout"]
+
+#Returns a command to run ping
+def build_ping_cmd(source_ip, target_ip, freq, duration):
+    ping_interval = 1/freq
+    ping_amount = freq * duration
+    return ["/bin/ping", f"{target_ip}", f"-I {source_ip}", f"-c {ping_amount}", f"-i {ping_interval}"]
+
 
 @debug_printer
 def config_validation(config):

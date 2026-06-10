@@ -63,10 +63,36 @@ def connection_status(target_ip, bind_ip = 0):
         print('The node is offline')
         return False
 
-def run_cmd(cmd:str):
-    print(f"#{cmd}")
-    subprocess.run(cmd, shell=True)
-    time.sleep(0.1)
+def get_directions(dirs: dict, execution_mode: int) -> list[dict]:
+    directions = []
+
+    if dirs["client_to_ap"] == 1:
+        if execution_mode == 1:
+            iperf_flag = "--reverse"
+        elif execution_mode == 0:
+            iperf_flag = ""
+
+        directions.append({
+            "client_to_ap": iperf_flag,
+        })
+
+    if dirs["ap_to_client"] == 1:
+        if execution_mode == 1:
+            iperf_flag = ""
+        elif execution_mode == 0:
+            iperf_flag = "--reverse"
+
+        directions.append({
+            "ap_to_client": iperf_flag,
+        })
+
+    if dirs["bidirectional"] == 1:
+        directions.append({
+            "bidirectional": "--bidir",
+        })
+
+    return directions
+
 
 def debug_printer(func):
     @wraps(func)
@@ -77,4 +103,6 @@ def debug_printer(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
 

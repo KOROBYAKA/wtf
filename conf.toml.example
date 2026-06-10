@@ -25,7 +25,12 @@ ap_wifi_iface = "phy0-ap0"
 #Set a name of physical device, to find use iwinfo phyname
 ap_phy = "phy0"
 
-[defaults]
+[directions]
+client_to_ap = 1
+ap_to_client = 1
+bidirectional = 1
+
+[iperf_args]
 #Test duration(seconds)
 timeout = 15
 #Bandwidth limit, default 0 -> no limited
@@ -35,15 +40,8 @@ bandwidth = 0
 # packet_length = 0 --> no limit
 packet_length = 0
 
-# Bidirectional: 1 - bidirectional / 0 - unidirectional
-bidir = 0
-
-# By default, the host running WTF acts like TX for iPerf3
-# Setting reverse to 1 make it act as a RX
-reverse = 0
-
 # Packet fragmentation function performed by iperf3
 # fragmentation: 0 - disabled / 1 - enabled
 fragmentation = 1
 
-
+[ping_args]

@@ -1,8 +1,13 @@
 import subprocess
-from wtf.tooling import run_cmd, debug_printer, connection_status
+import signal
+import threading
+from threading import Thread
+from wtf.tooling import debug_printer, connection_status
 from wtf.ssh_connection import get_client, remote_execution
 from wtf.errors import InvalidIPAddressError
-from wtf.conf import config_validation
+from wtf.conf import config_validation, build_iperf_cmd, build_ping_cmd
+from wtf.telemetry_handling import parse_iperf_result, parse_ping_result, create_data_record
+
 
 
 class Ap():
@@ -15,6 +20,7 @@ class Ap():
         cl_wifi_ip: str,
         cl_ctrl_ip: str,
         execution_mode: int,):
+
         # OpenWrt / Wi-Fi device identifiers
         self.uci_ap_iface = uci_ap_iface
         self.ap_wifi_iface = ap_wifi_iface
@@ -45,8 +51,13 @@ class Ap():
         else:
             raise ValueError("execution_mode must be 1 for AP mode or 0 for client mode")
 
+        #SSHClient object(paramiko)
         self.client = None
+        #iperf3 command
         self.iperf_cmd = None
+        #ping arguments dict
+        self.ping_freq = 1
+        self.test_duration = 1
 
     @classmethod
     def build_ap(cls, config):
@@ -67,6 +78,18 @@ class Ap():
         )
 
         return ap
+
+    def make_iperf_cmd(self, args):
+        self.iperf_cmd, self.test_duration = build_iperf_cmd(args, self.local_wifi_ip ,self.remote_wifi_ip)
+
+    def get_iperf_cmd(self):
+        return self.iperf_cmd
+
+    def set_iperf_cmd(self, cmd):
+        self.iperf_cmd = cmd
+
+    def set_ping_freq(self, freq):
+        self.ping_freq = freq
 
     @debug_printer
     def ip_access_check(self):
@@ -140,28 +163,6 @@ class Ap():
             _, _ = remote_execution(client = self.client, cmds = cmds)
 
     @debug_printer
-    def getter(self):
-        args = ['tx_bytes', 'rx_bytes', 'tx_packets', 'rx_packets']
-        cmd_base = f'cat /sys/class/net/{self.ap_wifi_iface}/statistics/'
-        cmds = {}
-        for arg in args:
-            cmd = cmd_base + arg
-            cmds[arg] = cmd
-        result = {}
-        if self.execution_mode == 1:
-            for arg, cmd in cmds.items():
-                res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-                stdout = res.stdout
-                result[arg] = stdout
-
-        if self.execution_mode == 0:
-            for arg, cmd in cmds.items():
-                output, _ = remote_execution(self.client, [cmd])
-                result[arg] = output[0]
-
-        return result
-
-    @debug_printer
     def ap_preflight_check_OpenWrt(self):
         cmds = [
             f"uci -q show wireless.{self.uci_ap_iface}",
@@ -191,20 +192,97 @@ class Ap():
         return False
 
     @debug_printer
-    def run_test(self, timeout):
-        net_data_before_test = self.getter()
-        _, _ = remote_execution(client =self.client, cmds = ["iperf3 -s -D"])
-        iperf_cmd = f"iperf3 -c {self.remote_wifi_ip}  {self.iperf_cmd}"
-        run_cmd(iperf_cmd)
-        net_data_after_test = self.getter()
-        _, _ = remote_execution(client = self.client, cmds = ["killall iperf3"])
+    def run_iperf(self, cmd):
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return proc
 
-        #results calculation
-        delta = {}
-        for key in net_data_before_test.keys():
-            delta[key] = int(net_data_after_test[key].strip()) - int(net_data_before_test[key].strip())
+    @debug_printer
+    def ping_local(self):
+        cmd = build_ping_cmd(source_ip=self.local_wifi_ip, target_ip=self.remote_wifi_ip,
+                             freq=self.ping_freq, duration=self.test_duration)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return proc
 
-        return delta
+    @debug_printer
+    def ping_remote(self, result_store):
+        cmd = build_ping_cmd(
+            source_ip=self.remote_wifi_ip,
+            target_ip=self.local_wifi_ip,
+            freq=self.ping_freq,
+            duration=self.test_duration,
+        )
+
+        cmd_str = " ".join(cmd)
+
+        def worker():
+            outputs, codes = remote_execution(
+                client=self.client,
+                cmds=[cmd_str],
+            )
+
+            result_store["stdout"] = outputs[0]
+            result_store["returncode"] = codes[0]
+
+        return Thread(target=worker)
+
+    @debug_printer
+    def run_test(self, direction):
+        _, _ = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
+
+        iperf_cmd = self.iperf_cmd + [direction]
+
+        iperf_proc = None
+        ping_proc = None
+        remote_thread = None
+
+        iperf_stdout = ""
+        iperf_stderr = ""
+        ping_stdout = ""
+        ping_stderr = ""
+        remote_result = {}
+
+        try:
+            iperf_proc = self.run_iperf(iperf_cmd)
+
+            remote_thread = self.ping_remote(remote_result)
+            remote_thread.start()
+
+            ping_proc = self.ping_local()
+
+            iperf_stdout, iperf_stderr = iperf_proc.communicate()
+            ping_stdout, ping_stderr = ping_proc.communicate()
+
+            remote_thread.join(timeout=self.test_duration)
+
+        finally:
+            if ping_proc is not None and ping_proc.poll() is None:
+                ping_proc.send_signal(signal.SIGINT)
+                ping_stdout, ping_stderr = ping_proc.communicate()
+
+            if remote_thread is not None and remote_thread.is_alive():
+                remote_thread.join(timeout=2)
+
+            _, _ = remote_execution(client=self.client, cmds=["killall iperf3"])
+
+        iperf_record = parse_iperf_result(iperf_stdout)
+
+        local_ping_record = parse_ping_result(ping_stdout)
+        remote_ping_record = parse_ping_result(remote_result.get("stdout", ""))
+
+        if self.execution_mode == 1:
+            ap_to_client_ping_result = local_ping_record
+            client_to_ap_ping_result = remote_ping_record
+        else:
+            ap_to_client_ping_result = remote_ping_record
+            client_to_ap_ping_result = local_ping_record
+
+        data_record = create_data_record(
+            iperf_record,
+            ap_to_client_ping_result,
+            client_to_ap_ping_result,
+        )
+
+        return data_record
 
     @debug_printer
     def generate_metadata(self) -> dict:
@@ -227,7 +305,5 @@ class Ap():
 
             "iperf_cmd": self.iperf_cmd,
         }
-
-
 
 
