@@ -9,7 +9,8 @@ def test_valid_config_passes(valid_config_exec0):
 
 def test_full_valid_defaults(valid_config_exec0):
     cmd = build_iperf_cmd(valid_config_exec0["iperf_args"], "192.168.1.1", "192.168.1.2")
-    premade = ["iperf3","-t 15", "-b 0", "-l 0","-J", "--dont-fragment", "-B 192.168.1.1", "-c 192.168.1.2"]
+    premade = ["iperf3","-t","15", "-b","0", "-l", "0","-J", "--dont-fragment", "-B" ,"192.168.1.1", "-c", "192.168.1.2",
+               "-i","15"]
 
     assert_that(sorted(cmd)).is_equal_to(sorted(premade))
 
