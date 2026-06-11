@@ -1,6 +1,6 @@
 import pytest
 from copy import deepcopy
-from wtf.conf import config_validation, check_defaults
+from wtf.conf import config_validation, build_iperf_cmd
 from wtf.errors import InvalidFieldError, MissingFieldError, ConfigConflictError
 
 def test_valid_config_passes(valid_config):
@@ -9,7 +9,7 @@ def test_valid_config_passes(valid_config):
 
 def test_full_valid_defaults(valid_config):
     defaults = valid_config["defaults"]
-    cmd = check_defaults(defaults)
+    cmd = build_iperf_cmd(defaults)
     assert cmd == "-t 15 -b 0 -l 0 --bidir --dont-fragment --reverse"
 
 def test_config_overflow_ip(valid_config):
@@ -105,7 +105,7 @@ def test_shortest_defaults():
     "fragmentation": 1,
     }
 
-    min_cmd1 = check_defaults(minimal_defaults)
-    min_cmd2 = check_defaults(short_defaults)
+    min_cmd1 = build_iperf_cmd(minimal_defaults)
+    min_cmd2 = build_iperf_cmd(short_defaults)
 
     assert min_cmd1 == min_cmd2

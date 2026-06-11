@@ -1,5 +1,4 @@
 import subprocess
-import time
 from functools import wraps
 import ipaddress
 from wtf.errors import InvalidIPAddressError
