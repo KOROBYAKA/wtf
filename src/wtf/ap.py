@@ -271,7 +271,8 @@ class Ap():
 
             _, _ = remote_execution(client=self.client, cmds=["killall iperf3"])
         iperf_results_decode = iperf_stdout.decode('utf-8')
-        iperf_record = parse_iperf_result(iperf_results_decode, self.execution_mode)
+        iperf_results_parsed = json.loads(iperf_results_decode)
+        iperf_record = parse_iperf_result(iperf_results_parsed, self.execution_mode)
 
         local_ping_result_decode = ping_stdout.decode('utf-8')
         local_ping_record = parse_ping_result(local_ping_result_decode)
