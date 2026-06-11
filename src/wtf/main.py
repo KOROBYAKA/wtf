@@ -39,7 +39,6 @@ def main():
         AP = Ap.build_ap(config)
         AP.make_iperf_cmd(config["iperf_args"])
         directions = get_directions(config["directions"],config["execution_mode"])
-        AP.set_ping_args(config["ping_args"])
         AP.ip_access_check()
         AP.set_ssh()
         if not AP.link_status():
