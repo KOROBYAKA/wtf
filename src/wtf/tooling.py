@@ -25,6 +25,20 @@ REQUIRED_FIELDS = {
         "cl_wifi_ip",
         "cl_ctrl_ip",
     ],
+    "directions":[
+        "client_to_ap",
+        "ap_to_client",
+        "bidirectional",
+    ],
+    "iperf_args":[
+        "timeout",
+        "bandwidth",
+        "packet_length",
+        "fragmentation",
+    ],
+    "ping_args":[
+        "frequency",
+    ]
 }
 
 IP_FIELDS = {

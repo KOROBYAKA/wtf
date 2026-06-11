@@ -3,18 +3,18 @@
 
 #Exectuion mode
 # Execution mode 1: running WTF on AP / 0: running WTF on client machine
-execution_mode = 0
+execution_mode = 1
 
 #Wi-Fi interface's IP address on host
 [client_conf]
 #Wi-Fi connected device's IP on tour machine
-cl_wifi_ip = "192.168.XXX.XXX"
-cl_ctrl_ip = "192.168.XXX.XXX"
+cl_wifi_ip = "192.168.2.2"
+cl_ctrl_ip = "192.168.1.2"
 
 [ap_conf]
 #Wi-Fi connection
-ap_wifi_ip = "192.168.XXX.XXX"
-ap_ctrl_ip = "192.168.XXX.XXX"
+ap_wifi_ip = "192.168.2.1"
+ap_ctrl_ip = "192.168.1.1"
 
 #Set the name that is used by UCI, to see use cmd "uci show wireless", needed for OpenWrt usage
 uci_ap_iface = "radio0"

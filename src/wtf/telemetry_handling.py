@@ -2,43 +2,49 @@ import re
 
 def parse_iperf_result(raw: dict, execution_mode: int) -> dict:
     end = raw["end"]
-    bidir = raw["start"]["test_start"]["bidir"] == 1
+    test_start = raw["start"]["test_start"]
+    bidir = test_start["bidir"] == 1
+    reverse = test_start["reverse"] == 1
 
-    # execution_mode 1 =  AP → TX then AP→Client
-    # execution_mode 0 = wtf runs on client → TX then Client→AP
-    if execution_mode == 1:
-        tx_label = "ap_to_client_mbps"
-        rx_label = "client_to_ap_mbps"
-        host_label = "cpu_ap"
-        remote_label = "cpu_client"
+    sent_mbps = round(end["sum_sent"]["bits_per_second"] / 1e6, 2)
+    recv_mbps = round(end["sum_received_bidir_reverse"]["bits_per_second"] / 1e6, 2) if bidir else None
+
+    if execution_mode == 1 and not reverse or execution_mode == 0 and reverse:
+        ap_to_client = sent_mbps
+        client_to_ap = recv_mbps
     else:
-        tx_label = "client_to_ap_mbps"
-        rx_label = "ap_to_client_mbps"
-        host_label = "cpu_client"
-        remote_label = "cpu_ap"
+        ap_to_client = recv_mbps
+        client_to_ap = sent_mbps
 
-    metrics = {
+    cpu = end["cpu_utilization_percent"]
+
+    if execution_mode == 1:
+        host, remote = "ap", "client"
+    else:
+        host, remote = "client", "ap"
+
+    return {
+        "status": "ok",
         "bidir": bidir,
-        "duration": raw["start"]["test_start"]["duration"],
-
-        tx_label: round(end["sum_sent"]["bits_per_second"] / 1e6, 2),
-        "tx_retransmits": end["sum_sent"]["retransmits"],
-
-        f"{host_label}_total": round(end["cpu_utilization_percent"]["host_total"], 2),
-        f"{host_label}_user": round(end["cpu_utilization_percent"]["host_user"], 2),
-        f"{host_label}_system": round(end["cpu_utilization_percent"]["host_system"], 2),
-
-        f"{remote_label}_total": round(end["cpu_utilization_percent"]["remote_total"], 2),
-        f"{remote_label}_user": round(end["cpu_utilization_percent"]["remote_user"], 2),
-        f"{remote_label}_system": round(end["cpu_utilization_percent"]["remote_system"], 2),
+        "reverse": reverse,
+        "duration": test_start["duration"],
+        "throughput": {
+            "ap_to_client": ap_to_client,
+            "client_to_ap": client_to_ap,
+        },
+        "cpu": {
+            host: {
+                "total":  round(cpu["host_total"], 2),
+                "user":   round(cpu["host_user"], 2),
+                "system": round(cpu["host_system"], 2),
+            },
+            remote: {
+                "total":  round(cpu["remote_total"], 2),
+                "user":   round(cpu["remote_user"], 2),
+                "system": round(cpu["remote_system"], 2),
+            },
+        },
     }
-
-    if bidir:
-        metrics[rx_label] = round(
-            end["sum_received_bidir_reverse"]["bits_per_second"] / 1e6, 2
-        )
-
-    return metrics
 
 def parse_ping_result(raw: str) -> dict:
     if not raw.strip():

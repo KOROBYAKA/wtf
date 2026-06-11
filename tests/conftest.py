@@ -1,55 +1,95 @@
-
+import json
+from pathlib import Path
 import pytest
+import pathlib
+import tomllib
 
 @pytest.fixture
-def valid_config():
-    return {
-        "execution_mode": 1,
-        "client_conf": {
-            "cl_wifi_ip": "192.168.1.2",
-            "cl_ctrl_ip": "192.168.2.2",
-        },
-        "ap_conf": {
-            "ap_wifi_ip": "192.168.1.1",
-            "ap_ctrl_ip": "192.168.2.1",
-            "uci_ap_iface": "radio0",
-            "ap_wifi_iface": "phy0-ap0",
-            "ap_phy": "phy0",
-        },
-        "defaults": {
-            "timeout": 15,
-            "bandwidth": 0,
-            "packet_length": 0,
-            "bidir": 1,
-            "reverse": 1,
-            "fragmentation": 0,
-        },
-    }
+def fixtures_dir():
+    return Path(__file__).parent / ("fixtures")
 
 @pytest.fixture
-def empty_fields_config():
-    return {
-        "execution_mode": None,
-        "client_conf": {
-            "cl_wifi_ip": None,
-            "cl_ctrl_ip": None,
-        },
-        "ap_conf": {
-            "ap_wifi_ip": None,
-            "ap_ctrl_ip": None,
-            "uci_ap_iface": None,
-            "ap_wifi_iface": None,
-            "ap_phy": None,
-        },
-        "defaults": {
-            "timeout": None,
-            "bandwidth": None,
-            "packet_length": None,
-            "bidir": None,
-            "reverse": None,
-            "fragmentation": None,
-        },
-    }
+def valid_config_exec0(fixtures_dir):
+    path = (fixtures_dir / "valid_config_exec0.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def valid_config_exec1(fixtures_dir):
+    path = (fixtures_dir / "valid_config_exec1.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_invalid_ip(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_invalid_ip.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_negative_ip(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_negative_ip.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_overflow_ip(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_overflow_ip.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_duplicate_ip(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_duplicate_ip.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_no_exec_mode(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_no_exec_mode.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_invalid_exec_mode(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_invalid_exec_mode.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def invalid_config_empty(fixtures_dir):
+    path = (fixtures_dir / "invalid_config_empty.toml")
+    with open(pathlib.Path(path), mode="rb") as fp:
+        config = tomllib.load(fp)
+        return config
+
+@pytest.fixture
+def iperf_udp(fixtures_dir):
+    with open(fixtures_dir / "iperf_udp.json") as f:
+        return json.load(f)
+
+@pytest.fixture
+def iperf_udp_bidir(fixtures_dir):
+    with open(fixtures_dir / "iperf_udp_bidir.json") as f:
+        return json.load(f)
+
+@pytest.fixture
+def iperf_tcp_bidir(fixtures_dir):
+    with open(fixtures_dir / "iperf_tcp_bidir.json") as f:
+        return json.load(f)
+
+@pytest.fixture
+def iperf_tcp(fixtures_dir):
+    with open(fixtures_dir / "iperf_tcp.json") as f:
+        return json.load(f)
 
 class FakeClient():
     def __init__(self,ip):

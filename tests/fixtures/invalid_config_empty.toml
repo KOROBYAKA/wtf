@@ -3,47 +3,47 @@
 
 #Exectuion mode
 # Execution mode 1: running WTF on AP / 0: running WTF on client machine
-execution_mode = 0
+execution_mode = ""
 
 #Wi-Fi interface's IP address on host
 [client_conf]
 #Wi-Fi connected device's IP on tour machine
-cl_wifi_ip = "192.168.XXX.XXX"
-cl_ctrl_ip = "192.168.XXX.XXX"
+cl_wifi_ip = ""
+cl_ctrl_ip = ""
 
 [ap_conf]
 #Wi-Fi connection
-ap_wifi_ip = "192.168.XXX.XXX"
-ap_ctrl_ip = "192.168.XXX.XXX"
+ap_wifi_ip = ""
+ap_ctrl_ip = ""
 
 #Set the name that is used by UCI, to see use cmd "uci show wireless", needed for OpenWrt usage
-uci_ap_iface = "radio0"
+uci_ap_iface = ""
 
 #Set a name of interface, to find use iw dev -> Interface
-ap_wifi_iface = "phy0-ap0"
+ap_wifi_iface = ""
 
-#Set a name of physical device, to find use iwinfo phyname
-ap_phy = "phy0"
+#Set a name of physical device, to find use iwinfo PHY name
+ap_phy = ""
 
 [directions]
-client_to_ap = 1
-ap_to_client = 1
-bidirectional = 1
+client_to_ap = ""
+ap_to_client = ""
+bidirectional = ""
 
 [iperf_args]
 #Test duration(seconds)
-timeout = 15
+timeout = ""
 #Bandwidth limit, default 0 -> no limited
-bandwidth = 0
+bandwidth = ""
 
 # Packet length for iperf3
 # packet_length = 0 --> no limit
-packet_length = 0
+packet_length = ""
 
 # Packet fragmentation function performed by iperf3
 # fragmentation: 0 - disabled / 1 - enabled
-fragmentation = 1
+fragmentation = ""
 
 [ping_args]
 #Freqyuency must be given in Hz, highest allowed frequency is 500Hz (due to ping util limitations)
-frequency = 10
+frequency = ""
