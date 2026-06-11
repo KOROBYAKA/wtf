@@ -77,7 +77,7 @@ def connection_status(target_ip, bind_ip = 0):
         return False
 
 def get_directions(dirs: dict, execution_mode: int) -> list[dict]:
-    directions = []
+    directions = {}
 
     if dirs["client_to_ap"] == 1:
         if execution_mode == 1:
@@ -85,9 +85,7 @@ def get_directions(dirs: dict, execution_mode: int) -> list[dict]:
         elif execution_mode == 0:
             iperf_flag = ""
 
-        directions.append({
-            "client_to_ap": iperf_flag,
-        })
+        directions["client_to_ap"]= iperf_flag
 
     if dirs["ap_to_client"] == 1:
         if execution_mode == 1:
@@ -95,14 +93,10 @@ def get_directions(dirs: dict, execution_mode: int) -> list[dict]:
         elif execution_mode == 0:
             iperf_flag = "--reverse"
 
-        directions.append({
-            "ap_to_client": iperf_flag,
-        })
+        directions["ap_to_client"]= iperf_flag
 
     if dirs["bidirectional"] == 1:
-        directions.append({
-            "bidirectional": "--bidir",
-        })
+        directions["bidirectional"] = "--bidir"
 
     return directions
 
