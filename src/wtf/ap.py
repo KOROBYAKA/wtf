@@ -1,6 +1,6 @@
 import subprocess
 import signal
-import threading
+import json
 from threading import Thread
 from wtf.tooling import debug_printer, connection_status
 from wtf.ssh_connection import get_client, remote_execution
@@ -252,7 +252,7 @@ class Ap():
             iperf_stdout, iperf_stderr = iperf_proc.communicate()
             ping_stdout, ping_stderr = ping_proc.communicate()
 
-            remote_thread.join(timeout=self.test_duration)
+            remote_thread.join(timeout=3)
 
         finally:
             if ping_proc is not None and ping_proc.poll() is None:
@@ -263,10 +263,11 @@ class Ap():
                 remote_thread.join(timeout=2)
 
             _, _ = remote_execution(client=self.client, cmds=["killall iperf3"])
+        iperf_record = json.loads(iperf_stdout.decode('utf-8'))
+        iperf_record = parse_iperf_result(iperf_record, self.execution_mode)
 
-        iperf_record = parse_iperf_result(iperf_stdout)
-
-        local_ping_record = parse_ping_result(ping_stdout)
+        local_ping_record = json.loads(ping_stdout.decode('utf-8'))
+        local_ping_record = parse_ping_result(local_ping_record)
         remote_ping_record = parse_ping_result(remote_result.get("stdout", ""))
 
         if self.execution_mode == 1:
