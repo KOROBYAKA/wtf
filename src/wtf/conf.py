@@ -23,10 +23,16 @@ def build_iperf_cmd(args, src_ip, dst_ip):
         "-t", f"{args['timeout']}",
         "-i", f"{args['timeout']}",
         "-J"]
+    command.append("-b")
     if "bandwidth" in args:
-        command.append(f"-b {args['bandwidth']}")
+        command.append(f"{args['bandwidth']}")
+    else:
+        command.append("0")
+    command.append("-l")
     if "packet_length" in args:
-        command.append(f"-l {args['packet_length']}")
+        command.append(f"{args['packet_length']}")
+    else:
+        command.append("0")
     if "fragmentation" in args and args["fragmentation"] == 0:
         command.append("--dont-fragment")
 
