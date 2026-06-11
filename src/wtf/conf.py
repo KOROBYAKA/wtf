@@ -36,7 +36,13 @@ def build_iperf_cmd(args, src_ip, dst_ip):
 def build_ping_cmd(source_ip, target_ip, freq, duration):
     ping_interval = 1/freq
     ping_amount = int(freq * (duration*0.8))
-    return ["/bin/ping", f"{target_ip}", f"-I {source_ip}", f"-c {ping_amount}", f"-i {ping_interval}"]
+    return [
+        "/bin/ping",
+        f"{target_ip}",
+        "-I", f"{source_ip}",
+        "-c", f"{ping_amount}",
+        "-i", f"{ping_interval}"
+    ]
 
 
 @debug_printer
