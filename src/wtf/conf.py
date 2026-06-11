@@ -16,7 +16,7 @@ def load_config(path):
 #Returns a command to run iperf
 @debug_printer
 def build_iperf_cmd(args, src_ip, dst_ip):
-    command = ["iperf3", "-c", f"{dst_ip}", f"-B {src_ip}", f"-t {args["timeout"]}", "-J"]
+    command = ["iperf3", f"-c {dst_ip}", f"-B {src_ip}", f"-t {args["timeout"]}", "-J"]
     if "bandwidth" in args:
         command.append(f"-b {args['bandwidth']}")
     if "packet_length" in args:
@@ -24,12 +24,12 @@ def build_iperf_cmd(args, src_ip, dst_ip):
     if "fragmentation" in args and args["fragmentation"] == 0:
         command.append("--dont-fragment")
 
-    return command, args["timeout"]
+    return command
 
 #Returns a command to run ping
 def build_ping_cmd(source_ip, target_ip, freq, duration):
     ping_interval = 1/freq
-    ping_amount = freq * duration
+    ping_amount = int(freq * (duration*0.8))
     return ["/bin/ping", f"{target_ip}", f"-I {source_ip}", f"-c {ping_amount}", f"-i {ping_interval}"]
 
 

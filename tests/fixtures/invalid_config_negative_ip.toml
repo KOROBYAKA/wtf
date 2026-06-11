@@ -8,13 +8,13 @@ execution_mode = 0
 #Wi-Fi interface's IP address on host
 [client_conf]
 #Wi-Fi connected device's IP on tour machine
-cl_wifi_ip = "192.168.XXX.XXX"
-cl_ctrl_ip = "192.168.XXX.XXX"
+cl_wifi_ip = "192.168.1.-1"
+cl_ctrl_ip = "192.168.2.2"
 
 [ap_conf]
 #Wi-Fi connection
-ap_wifi_ip = "192.168.XXX.XXX"
-ap_ctrl_ip = "192.168.XXX.XXX"
+ap_wifi_ip = "192.168.3.1"
+ap_ctrl_ip = "192.168.4.1"
 
 #Set the name that is used by UCI, to see use cmd "uci show wireless", needed for OpenWrt usage
 uci_ap_iface = "radio0"
@@ -22,7 +22,7 @@ uci_ap_iface = "radio0"
 #Set a name of interface, to find use iw dev -> Interface
 ap_wifi_iface = "phy0-ap0"
 
-#Set a name of physical device, to find use iwinfo phyname
+#Set a name of physical device, to find use iwinfo PHY name
 ap_phy = "phy0"
 
 [directions]

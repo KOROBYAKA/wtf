@@ -1,6 +1,7 @@
 import subprocess
 import signal
 import json
+import time
 from threading import Thread
 from wtf.tooling import debug_printer, connection_status
 from wtf.ssh_connection import get_client, remote_execution
@@ -19,7 +20,9 @@ class Ap():
         ap_ctrl_ip: str,
         cl_wifi_ip: str,
         cl_ctrl_ip: str,
-        execution_mode: int,):
+        execution_mode: int,
+        ping_freq: int,
+        test_duration: int,):
 
         # OpenWrt / Wi-Fi device identifiers
         self.uci_ap_iface = uci_ap_iface
@@ -56,8 +59,8 @@ class Ap():
         #iperf3 command
         self.iperf_cmd = None
         #ping arguments dict
-        self.ping_freq = 1
-        self.test_duration = 1
+        self.ping_freq = ping_freq
+        self.test_duration = test_duration
 
     @classmethod
     def build_ap(cls, config):
@@ -75,12 +78,15 @@ class Ap():
             cl_ctrl_ip=config["client_conf"]["cl_ctrl_ip"],
 
             execution_mode=config["execution_mode"],
+            test_duration=config["iperf_args"]["timeout"],
+            ping_freq = config["ping_args"]["frequency"]
+
         )
 
         return ap
 
     def make_iperf_cmd(self, args):
-        self.iperf_cmd, self.test_duration = build_iperf_cmd(args, self.local_wifi_ip ,self.remote_wifi_ip)
+        self.iperf_cmd= build_iperf_cmd(args, self.local_wifi_ip ,self.remote_wifi_ip)
 
     def get_iperf_cmd(self):
         return self.iperf_cmd
@@ -226,11 +232,12 @@ class Ap():
         return Thread(target=worker)
 
     @debug_printer
-    def run_test(self, direction):
+    def run_test(self, direction, transport):
         _, _ = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
-
-        iperf_cmd = self.iperf_cmd + [direction]
-
+        if transport == "tcp":
+            iperf_cmd = self.iperf_cmd + [direction]
+        else:
+            iperf_cmd = self.iperf_cmd + [direction, "-u"]
         iperf_proc = None
         ping_proc = None
         remote_thread = None
@@ -243,7 +250,7 @@ class Ap():
 
         try:
             iperf_proc = self.run_iperf(iperf_cmd)
-
+            time.sleep(self.test_duration*0.1)
             remote_thread = self.ping_remote(remote_result)
             remote_thread.start()
 
@@ -263,11 +270,11 @@ class Ap():
                 remote_thread.join(timeout=2)
 
             _, _ = remote_execution(client=self.client, cmds=["killall iperf3"])
-        iperf_record = json.loads(iperf_stdout.decode('utf-8'))
-        iperf_record = parse_iperf_result(iperf_record, self.execution_mode)
+        iperf_results_decode = iperf_stdout.decode('utf-8')
+        iperf_record = parse_iperf_result(iperf_results_decode, self.execution_mode)
 
-        local_ping_record = json.loads(ping_stdout.decode('utf-8'))
-        local_ping_record = parse_ping_result(local_ping_record)
+        local_ping_result_decode = ping_stdout.decode('utf-8')
+        local_ping_record = parse_ping_result(local_ping_result_decode)
         remote_ping_record = parse_ping_result(remote_result.get("stdout", ""))
 
         if self.execution_mode == 1:
@@ -287,6 +294,8 @@ class Ap():
 
     @debug_printer
     def generate_metadata(self) -> dict:
+        ping_cmd = build_ping_cmd(source_ip=self.local_wifi_ip, target_ip=self.remote_wifi_ip,
+                             freq=self.ping_freq, duration=self.test_duration)
         return {
             "execution_mode": self.execution_mode,
 
@@ -305,6 +314,7 @@ class Ap():
             "control_target_ip": self.control_target_ip,
 
             "iperf_cmd": self.iperf_cmd,
+            "ping_cmd": ping_cmd
         }
 
 

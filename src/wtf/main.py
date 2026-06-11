@@ -34,7 +34,6 @@ def main():
         print("Config and setup are valid.\nCan start the test with:wtf run [-c,--debug]")
 
     elif args.command == "run":
-
         #Configuring AccessPoint object for AP control
         config = load_config(args.config)
         AP = Ap.build_ap(config)
@@ -49,15 +48,21 @@ def main():
             raise Exception("AP_PREFLIGHT_CHECK_OPENWRT didn't pass. Check the config and connectivity.")
         #metadata = AP.generate_metadata()
         #del metadata["client"]
-        wifi_channels,ht_modes = AP.get_wifi_capabilities()
+        wifi_channels, ht_modes = AP.get_wifi_capabilities()
         #wifi_channels = ['1']
         #ht_modes = ['HT20']
+        config["transports"] = ["udp","tcp"]
 
         print("Starting tests")
 
+        final_result = {}
         for channel in wifi_channels:
-            final_result[channel] = {}
             for ht_mode in ht_modes:
+                channel_key = str(channel)
+                htmode_key = str(ht_mode)
+
+                final_result.setdefault(channel_key, {})
+                final_result[channel_key].setdefault(htmode_key, {})
                 print(f"Setting channel:{channel} and htmode: {ht_mode}")
                 AP.set_wifi_capabilities_OpenWrt(channel,ht_mode)
                 time.sleep(5)
@@ -75,15 +80,16 @@ def main():
                             time.sleep(5+x*5)
                 if skip:
                     continue
-                for direction, direction_flag in directions:
+                for direction, direction_flag in directions.items():
+                    final_result[channel_key][htmode_key].setdefault(direction, {})
                     for transport in config["transports"]:
                         result = AP.run_test(direction_flag, transport)
-                        final_result[str(channel)][str(ht_mode)][direction][transport] = result
+                        final_result[channel_key][htmode_key][direction][transport] = result
 
         if AP.client is not None:
             AP.client.close()
         metadata = AP.generate_metadata()
-        print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
+        #print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
         save_results(format="json",final_result=final_result,metadata=metadata)
         return 0
 
