@@ -16,7 +16,13 @@ def load_config(path):
 #Returns a command to run iperf
 @debug_printer
 def build_iperf_cmd(args, src_ip, dst_ip):
-    command = ["iperf3", f"-c {dst_ip}", f"-B {src_ip}", f"-t {args["timeout"]}", "-J"]
+    command = [
+        "iperf3",
+        "-c", f"{dst_ip}",
+        "-B", f"{src_ip}",
+        "-t", f"{args['timeout']}",
+        "-i", f"{args['timeout']}",
+        "-J"]
     if "bandwidth" in args:
         command.append(f"-b {args['bandwidth']}")
     if "packet_length" in args:
