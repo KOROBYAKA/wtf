@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import time
+from pathlib import Path
 from wtf.conf import load_config, config_validation
 from wtf.tooling import set_debug, get_directions
 from wtf.results import save_results
-from wtf.ap import Ap
 from wtf.cli import get_parser, parse
 
 
@@ -20,6 +20,8 @@ def main():
         return 0
 
     elif args.command == "preflight":
+        from wtf.ap import Ap
+
         config = load_config(args.config)
         config_validation(config)
         AP = Ap.build_ap(config)
@@ -34,6 +36,8 @@ def main():
         print("Config and setup are valid.\nCan start the test with:wtf run [-c,--debug]")
 
     elif args.command == "run":
+        from wtf.ap import Ap
+
         #Configuring AccessPoint object for AP control
         final_result = {}
         config = load_config(args.config)
@@ -86,7 +90,42 @@ def main():
         save_results(format="json",final_result=final_result,metadata=metadata)
         return 0
 
+    elif args.command == "plot":
+        from wtf.plotter import plot_file
 
+        result_path = _resolve_plot_path(args.path_option or args.path)
+        print(f"Plotting results from: {result_path}")
+        plot_file(result_path)
+        return 0
+
+
+def _resolve_plot_path(path_arg=None):
+    if path_arg:
+        path = Path(path_arg)
+        if path.is_dir():
+            path = path / "results.json"
+
+        if not path.exists():
+            raise FileNotFoundError(f"Result file does not exist: {path}")
+
+        if path.suffix.lower() != ".json":
+            raise ValueError(f"Plot path must point to a JSON file: {path}")
+
+        return path
+
+    results_dir = Path.cwd() / "results"
+    candidates = sorted(
+        results_dir.glob("*/results.json"),
+        key=lambda candidate: candidate.stat().st_mtime,
+        reverse=True,
+    )
+
+    if not candidates:
+        raise FileNotFoundError(
+            f"No result files found under {results_dir}. Provide one with: wtf plot --path <results.json>"
+        )
+
+    return candidates[0]
 
 
 if __name__ == "__main__":

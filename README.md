@@ -92,6 +92,19 @@ wtf run --config conf.toml
 
 Results are written under `results/<timestamp>/` as JSON files.
 
+Plot the newest result file:
+
+```sh
+wtf plot
+```
+
+Plot a specific result file or result directory:
+
+```sh
+wtf plot --path results/2026-06-12_12-00/results.json
+wtf plot results/2026-06-12_12-00
+```
+
 ## Roadmap
   - [ ] pip publish
   - [ ] RTT measurement

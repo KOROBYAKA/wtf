@@ -22,6 +22,12 @@ def get_parser():
     parser_run.add_argument('-c', '--config',help="Path to config file", default="conf.toml")
     parser_run.add_argument('--debug', default=False, action='store_true')
 
+    #Adding subparser for plotting
+    parser_plot = subparsers.add_parser('plot', help='Plot WTF results')
+    parser_plot.add_argument('path', nargs='?', help="Path to results.json or a result directory")
+    parser_plot.add_argument('--path', dest='path_option', help="Path to results.json or a result directory")
+    parser_plot.add_argument('--debug', default=False, action='store_true')
+
     parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
 
 
