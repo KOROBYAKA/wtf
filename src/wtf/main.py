@@ -75,9 +75,10 @@ def main():
                     continue
                 for direction, direction_flag in directions.items():
                     final_result[channel_key][htmode_key].setdefault(direction, {})
-                    for transport in config["transport"]:
-                        result = AP.run_test(direction_flag, transport)
-                        final_result[channel_key][htmode_key][direction][transport] = result
+                    for transport, v in config["transport"].items():
+                        if v:
+                            result = AP.run_test(direction_flag, transport)
+                            final_result[channel_key][htmode_key][direction][transport] = result
 
         if AP.client is not None:
             AP.client.close()
