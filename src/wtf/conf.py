@@ -43,11 +43,11 @@ def build_ping_cmd(source_ip, target_ip, freq, duration):
     ping_interval = 1/freq
     ping_amount = int(freq * (duration*0.8))
     return [
-        "/bin/ping",
-        f"{target_ip}",
+        "ping",
         "-I", f"{source_ip}",
         "-c", f"{ping_amount}",
-        "-i", f"{ping_interval}"
+        "-i", f"{ping_interval}",
+        f"{target_ip}",
     ]
 
 
