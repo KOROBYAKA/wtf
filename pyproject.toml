@@ -28,7 +28,7 @@ dependencies = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: Linux",
+    "Operating System :: POSIX :: Linux",
 ]
 license = "AGPL-3.0"
 license-files = ["LICEN[CS]E*"]
