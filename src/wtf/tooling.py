@@ -30,6 +30,10 @@ REQUIRED_FIELDS = {
         "ap_to_client",
         "bidirectional",
     ],
+    "transport":[
+        "tcp",
+        "udp",
+    ],
     "iperf_args":[
         "timeout",
         "bandwidth",

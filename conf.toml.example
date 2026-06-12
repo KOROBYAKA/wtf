@@ -26,9 +26,15 @@ ap_wifi_iface = "phy0-ap0"
 ap_phy = "phy0"
 
 [directions]
+#Traffic directions for iperf3 tests
 client_to_ap = 1
 ap_to_client = 1
 bidirectional = 1
+
+[transport]
+#Transport protocols to test
+tcp = 1
+udp = 1
 
 [iperf_args]
 #Test duration(seconds)

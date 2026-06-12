@@ -6,7 +6,7 @@ def parse_iperf_result(raw: dict, execution_mode: int) -> dict:
     bidir = test_start["bidir"] == 1
     reverse = test_start["reverse"] == 1
 
-    sent_mbps = round(end["sum_sent"]["bits_per_second"] / 1e6, 2)
+    sent_mbps = round(end["sum_received"]["bits_per_second"] / 1e6, 2)
     recv_mbps = round(end["sum_received_bidir_reverse"]["bits_per_second"] / 1e6, 2) if bidir else None
 
     if execution_mode == 1 and not reverse or execution_mode == 0 and reverse:

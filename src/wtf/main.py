@@ -2,7 +2,7 @@
 import time
 from wtf.conf import load_config, config_validation
 from wtf.tooling import set_debug, get_directions
-from wtf.results import print_results, save_results
+from wtf.results import save_results
 from wtf.ap import Ap
 from wtf.cli import get_parser, parse
 
@@ -35,6 +35,7 @@ def main():
 
     elif args.command == "run":
         #Configuring AccessPoint object for AP control
+        final_result = {}
         config = load_config(args.config)
         AP = Ap.build_ap(config)
         AP.make_iperf_cmd(config["iperf_args"])
@@ -45,16 +46,9 @@ def main():
             raise Exception("link_status: False\nSome IP addresses are not available.")
         if not AP.ap_preflight_check_OpenWrt():
             raise Exception("AP_PREFLIGHT_CHECK_OPENWRT didn't pass. Check the config and connectivity.")
-        #metadata = AP.generate_metadata()
-        #del metadata["client"]
         wifi_channels, ht_modes = AP.get_wifi_capabilities()
-        #wifi_channels = ['1']
-        #ht_modes = ['HT20']
-        config["transports"] = ["udp","tcp"]
 
         print("Starting tests")
-
-        final_result = {}
         for channel in wifi_channels:
             for ht_mode in ht_modes:
                 channel_key = str(channel)
@@ -81,14 +75,13 @@ def main():
                     continue
                 for direction, direction_flag in directions.items():
                     final_result[channel_key][htmode_key].setdefault(direction, {})
-                    for transport in config["transports"]:
+                    for transport in config["transport"]:
                         result = AP.run_test(direction_flag, transport)
                         final_result[channel_key][htmode_key][direction][transport] = result
 
         if AP.client is not None:
             AP.client.close()
         metadata = AP.generate_metadata()
-        #print_results(final_result,ht_modes,wifi_channels,config["defaults"]["timeout"])
         save_results(format="json",final_result=final_result,metadata=metadata)
         return 0
 

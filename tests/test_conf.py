@@ -96,3 +96,14 @@ def test_iperf_cmd(valid_config_exec0):
     min_cmd2 = build_iperf_cmd(conf_args,"192.168.1.1", "192.168.1.2")
 
     assert min_cmd1 == min_cmd2
+
+def test_ping_cmd(valid_config_exec0):
+    args = {
+        "timeout": 15,
+        "frequency": 10
+    }
+    conf_args = valid_config_exec0["ping_args"]
+    conf_cmd = build_ping_cmd("192.168.1.1", "192.168.1.2",conf_args["frequency"],valid_config_exec0["iperf_args"]["timeout"])
+    args_cmd = build_ping_cmd("192.168.1.1", "192.168.1.2",10,15)
+
+    assert conf_cmd == args_cmd

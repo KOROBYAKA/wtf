@@ -14,6 +14,7 @@ def save_json(path, final_result, metadata):
         json.dump(metadata, f, indent=4)
     print(f"Test results are saved to {output_file}")
 
+#depricated
 def print_results(final_result, htmodes, channels, timeout):
     for channel in channels:
         ht = []
