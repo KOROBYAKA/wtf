@@ -94,15 +94,19 @@ def parse_ping_result(raw: str) -> dict:
 
 def create_data_record(
         iperf_record: dict,
-        ap_to_client_ping: dict,
-        client_to_ap_ping: dict,
+        ap_to_client_ping_result_loaded: dict,
+        client_to_ap_ping_result_loaded: dict,
+        ap_to_client_ping_result_cold: dict,
+        client_to_ap_ping_result_cold: dict,
 ) -> dict:
     def prefix_keys(d: dict, prefix: str) -> dict:
         return {f"{prefix}_{k}": v for k, v in d.items()}
 
     record = {}
     record.update(iperf_record)
-    record.update(prefix_keys(ap_to_client_ping, "ping_ap_to_client"))
-    record.update(prefix_keys(client_to_ap_ping, "ping_client_to_ap"))
+    record.update(prefix_keys(ap_to_client_ping_result_loaded, "ap_to_client_ping_result_loaded"))
+    record.update(prefix_keys(client_to_ap_ping_result_loaded, "client_to_ap_ping_result_loaded"))
+    record.update(prefix_keys(ap_to_client_ping_result_cold, "ap_to_client_ping_result_cold"))
+    record.update(prefix_keys(client_to_ap_ping_result_cold, "client_to_ap_ping_result_cold"))
 
     return record
