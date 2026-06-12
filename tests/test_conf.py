@@ -1,4 +1,5 @@
 import pytest
+from copy import deepcopy
 from assertpy import assert_that
 from wtf.conf import config_validation, build_iperf_cmd, build_ping_cmd, load_config
 from wtf.errors import InvalidFieldError, MissingFieldError, ConfigConflictError
@@ -80,6 +81,24 @@ def test_config_empty_fields(invalid_config_empty):
 
     error_message = str(exc_info.value)
     assert "Invalid configuration field" in error_message
+
+@pytest.mark.parametrize("transport,value", [
+    ("tcp", 2),
+    ("udp", -1),
+    ("tcp", True),
+    ("udp", "1"),
+])
+def test_config_invalid_transport_values(valid_config_exec0, transport, value):
+    config = deepcopy(valid_config_exec0)
+    config["transport"][transport] = value
+
+    with pytest.raises(InvalidFieldError) as exc_info:
+        config_validation(config)
+
+    error_message = str(exc_info.value)
+    assert "Invalid configuration field" in error_message
+    assert f"transport.{transport}" in error_message
+    assert str(value) in error_message
 
 def test_iperf_cmd(valid_config_exec0):
     args = {

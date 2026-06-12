@@ -82,6 +82,10 @@ def config_validation(config):
             except ValueError:
                 raise InvalidFieldError(field, value)
 
+    for transport, enabled in config["transport"].items():
+        if type(enabled) is not int or enabled not in (0, 1):
+            raise InvalidFieldError(f"transport.{transport}", enabled)
+
     if config["ap_conf"]["ap_wifi_ip"] == config["client_conf"]["cl_wifi_ip"]:
         raise ConfigConflictError("ap_wifi_ip and cl_wifi_ip must be different")
 
