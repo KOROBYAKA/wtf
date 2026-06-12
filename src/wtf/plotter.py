@@ -49,9 +49,11 @@ def plot_data(data, show=True):
             direction,
             metric="rtt",
             title="RTT",
-            ylabel="RTT avg (ms)",
+            ylabel="RTT (ms)",
         )
 
+        axes[0].tick_params(axis="x", labelbottom=True)
+        axes[0].set_xlabel("Channel:HT mode")
         axes[1].set_xlabel("Channel:HT mode")
         axes[1].set_xticks(x_values)
         axes[1].set_xticklabels(x_labels, rotation=45, ha="right")
@@ -108,10 +110,12 @@ def _group_records(data):
 
 
 def _plot_metric(axis, x_values, x_labels, records, direction, metric, title, ylabel):
-    series = _metric_series(records, direction, metric)
-
-    for name, values in series.items():
-        axis.plot(x_values, values, marker="o", label=name)
+    if metric == "rtt":
+        _plot_rtt_metric(axis, x_values, records)
+    else:
+        series = _throughput_series(records, direction)
+        for name, values in series.items():
+            axis.plot(x_values, values, marker="o", label=name)
 
     axis.set_title(title)
     axis.set_ylabel(ylabel)
@@ -131,23 +135,113 @@ def _plot_metric(axis, x_values, x_labels, records, direction, metric, title, yl
     axis.set_xticklabels(x_labels, rotation=45, ha="right")
 
 
-def _metric_series(records, direction, metric):
+def _plot_rtt_metric(axis, x_values, records):
+    cap_half_width = 0.08
+    direction_colors = {
+        "ap_to_client": "tab:blue",
+        "client_to_ap": "tab:orange",
+    }
+
+    for direction in ("ap_to_client", "client_to_ap"):
+        stats = []
+        plot_x_values = []
+        avg_x_values = []
+        avg_values = []
+
+        for x_value, item in zip(x_values, records):
+            stat = _rtt_box_stat(item["record"], direction)
+            if stat is None:
+                continue
+
+            stats.append(stat)
+            plot_x_values.append(x_value)
+            avg_x_values.append(x_value)
+            avg_values.append(stat["med"])
+
+        if not stats:
+            continue
+
+        for index, stat in enumerate(stats):
+            x_value = plot_x_values[index]
+            axis.vlines(
+                x_value,
+                stat["whislo"],
+                stat["whishi"],
+                color=direction_colors[direction],
+                alpha=0.65,
+                linewidth=2.0,
+                label=f"{direction} min-max" if index == 0 else None,
+            )
+            axis.hlines(
+                [stat["whislo"], stat["whishi"]],
+                x_value - cap_half_width,
+                x_value + cap_half_width,
+                color=direction_colors[direction],
+                alpha=0.65,
+                linewidth=2.0,
+            )
+
+        axis.plot(
+            avg_x_values,
+            avg_values,
+            color=direction_colors[direction],
+            marker="o",
+            linewidth=1.5,
+            label=f"{direction} avg",
+        )
+
+
+def _throughput_series(records, direction):
     if direction == "bidirectional":
         return {
-            "ap_to_client": [_metric_value(item["record"], "ap_to_client", metric) for item in records],
-            "client_to_ap": [_metric_value(item["record"], "client_to_ap", metric) for item in records],
+            "ap_to_client": [_throughput_value(item["record"], "ap_to_client") for item in records],
+            "client_to_ap": [_throughput_value(item["record"], "client_to_ap") for item in records],
         }
 
     return {
-        direction: [_metric_value(item["record"], direction, metric) for item in records],
+        direction: [_throughput_value(item["record"], direction) for item in records],
     }
 
 
-def _metric_value(record, direction, metric):
-    if metric == "throughput":
-        return record.get("throughput", {}).get(direction)
+def _throughput_value(record, direction):
+    return record.get("throughput", {}).get(direction)
 
-    return record.get(f"ping_{direction}_rtt_avg_ms")
+
+def _rtt_value(record, direction, statistic):
+    return record.get(f"ping_{direction}_rtt_{statistic}_ms")
+
+
+def _rtt_box_stat(record, direction):
+    min_value = _rtt_value(record, direction, "min")
+    avg_value = _rtt_value(record, direction, "avg")
+    max_value = _rtt_value(record, direction, "max")
+
+    if min_value is None and avg_value is None and max_value is None:
+        return None
+
+    if avg_value is None:
+        avg_value = _average_present_values(min_value, max_value)
+    if min_value is None:
+        min_value = avg_value
+    if max_value is None:
+        max_value = avg_value
+
+    lower = min(min_value, avg_value, max_value)
+    middle = avg_value
+    upper = max(min_value, avg_value, max_value)
+
+    return {
+        "whislo": lower,
+        "q1": (lower + middle) / 2,
+        "med": middle,
+        "q3": (middle + upper) / 2,
+        "whishi": upper,
+    }
+
+
+def _average_present_values(*values):
+    present_values = [value for value in values if value is not None]
+    return sum(present_values) / len(present_values)
 
 
 def _cpu_series(records):
