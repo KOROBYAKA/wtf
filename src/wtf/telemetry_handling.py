@@ -1,50 +1,61 @@
 import re
 
-def parse_iperf_result(raw: dict, execution_mode: int) -> dict:
-    end = raw["end"]
-    test_start = raw["start"]["test_start"]
-    bidir = test_start["bidir"] == 1
-    reverse = test_start["reverse"] == 1
+def parse_iperf_result(raw: dict, execution_mode: int) -> dict | None:
+    try:
+        end = raw["end"]
+        test_start = raw["start"]["test_start"]
 
-    sent_mbps = round(end["sum_received"]["bits_per_second"] / 1e6, 2)
-    recv_mbps = round(end["sum_received_bidir_reverse"]["bits_per_second"] / 1e6, 2) if bidir else None
+        bidir = test_start["bidir"] == 1
+        reverse = test_start["reverse"] == 1
 
-    if execution_mode == 1 and not reverse or execution_mode == 0 and reverse:
-        ap_to_client = sent_mbps
-        client_to_ap = recv_mbps
-    else:
-        ap_to_client = recv_mbps
-        client_to_ap = sent_mbps
+        sent_mbps = round(end["sum_received"]["bits_per_second"] / 1e6, 2)
+        recv_mbps = (
+            round(end["sum_received_bidir_reverse"]["bits_per_second"] / 1e6, 2)
+            if bidir
+            else None
+        )
 
-    cpu = end["cpu_utilization_percent"]
+        if (execution_mode == 1 and not reverse) or (execution_mode == 0 and reverse):
+            ap_to_client = sent_mbps
+            client_to_ap = recv_mbps
+        else:
+            ap_to_client = recv_mbps
+            client_to_ap = sent_mbps
 
-    if execution_mode == 1:
-        host, remote = "ap", "client"
-    else:
-        host, remote = "client", "ap"
+        cpu = end["cpu_utilization_percent"]
 
-    return {
-        "status": "ok",
-        "bidir": bidir,
-        "reverse": reverse,
-        "duration": test_start["duration"],
-        "throughput": {
-            "ap_to_client": ap_to_client,
-            "client_to_ap": client_to_ap,
-        },
-        "cpu": {
-            host: {
-                "total":  round(cpu["host_total"], 2),
-                "user":   round(cpu["host_user"], 2),
-                "system": round(cpu["host_system"], 2),
+        if execution_mode == 1:
+            host, remote = "ap", "client"
+        else:
+            host, remote = "client", "ap"
+
+        return {
+            "status": "ok",
+            "bidir": bidir,
+            "reverse": reverse,
+            "duration": test_start["duration"],
+            "throughput": {
+                "ap_to_client": ap_to_client,
+                "client_to_ap": client_to_ap,
             },
-            remote: {
-                "total":  round(cpu["remote_total"], 2),
-                "user":   round(cpu["remote_user"], 2),
-                "system": round(cpu["remote_system"], 2),
+            "cpu": {
+                host: {
+                    "total": round(cpu["host_total"], 2),
+                    "user": round(cpu["host_user"], 2),
+                    "system": round(cpu["host_system"], 2),
+                },
+                remote: {
+                    "total": round(cpu["remote_total"], 2),
+                    "user": round(cpu["remote_user"], 2),
+                    "system": round(cpu["remote_system"], 2),
+                },
             },
-        },
-    }
+        }
+
+    except (KeyError, TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
 
 def parse_ping_result(raw: str) -> dict:
     if not raw.strip():
