@@ -1,53 +1,97 @@
-  # WTF - Wi-Fi Test Framework
-  
-  WTF is a Python CLI tool for automating Wi-Fi throughput tests with different Wi-Fi radio settings.
-  
-  At the current stage, WTF is designed for OpenWrt-based access points and uses UCI and SSH.
-  
-  
-  ## Why?
-  Manually changing Wi-Fi channel/bandwidth settings, running a test, recording the result, and repeating this 30+ times is tedious and error-prone. WTF automates this loop.
+# WTF - Wi-Fi Test Framework
 
-  ## Prerequisites
-  - **Access Point**: OpenWrt
-  - **Client machine**: Linux
-  - **Software**: iperf3, Python 3.11+
-  - **Setup**: AP and client machine must be connected through:
-    - a control network for SSH/UCI access;
-    - a Wi-Fi test network for throughput measurements.
-  ## Installation
-  1. First download the package sources(not published to pip yet): 
+WTF is a Python CLI tool for automating Wi-Fi throughput tests across Wi-Fi radio settings.
 
-  ```git clone https://github.com/KOROBYAKA/WTF```
+At the current stage, WTF is designed for OpenWrt-based access points. It controls the AP over SSH, changes wireless settings through UCI, runs iperf3 throughput tests, and records ping-based latency data alongside throughput results.
 
-  2. Enter the project directory: 
+## Why?
 
-  ```cd WTF```
+Manually changing Wi-Fi channel and bandwidth settings, running a test, recording the result, and repeating that cycle many times is tedious and error-prone. WTF automates that loop.
 
-  3. Create a Python3 virtual environment(``pipenv run`` or ```python3 -m venv .venv```) and activate it
+## Prerequisites
 
-  4. Install the package: 
+- **Access point**: OpenWrt
+- **Client machine**: Linux
+- **Python**: 3.11+
+- **Required tools**: `iperf3`, `ping`, `iw`, `iwinfo`, `uci`
+- **OpenWrt packages**: `iputils-ping` must be installed on the OpenWrt node because BusyBox ping does not support subsecond intervals.
+- **Network setup**:
+  - a control network for SSH/UCI access;
+  - a Wi-Fi test network for throughput and latency measurements.
 
-  ```pip install .```
-  
-  ## Usage
-  
-  ### Check the configuration
-  wtf check-config allows user to check if the configuration in given path is valid, the basic file for configuration to check is the conf.toml (conf example can be found from the conf.toml.example).
+## Installation
 
-  ```wtf check-config --config conf.toml```
-  ### Preflight check
-  ```wtf preflight --config conf.toml```
+From PyPI:
 
-  ### Run
-  wtf run executes the test.
-  
+```sh
+pip install WTF
+```
 
-  ```wtf run --config conf.toml```
+From source:
 
+```sh
+git clone https://github.com/KOROBYAKA/wtf
+cd wtf
+python3 -m venv .venv
+. .venv/bin/activate
+pip install .
+```
 
-  ## Roadmap
+For development:
+
+```sh
+pip install ".[dev]"
+```
+
+## Configuration
+
+Create a config file from the example:
+
+```sh
+cp conf.toml.example conf.toml
+```
+
+Set the control-plane and Wi-Fi test-plane IP addresses, OpenWrt wireless identifiers, enabled directions, enabled transports, iperf settings, and ping frequency.
+
+Transport flags use `1` for enabled and `0` for disabled:
+
+```toml
+[transport]
+tcp = 1
+udp = 1
+```
+
+Direction flags use the same convention:
+
+```toml
+[directions]
+client_to_ap = 1
+ap_to_client = 1
+bidirectional = 1
+```
+
+## Usage
+
+Validate the config:
+
+```sh
+wtf check-config --config conf.toml
+```
+
+Run setup and connectivity checks:
+
+```sh
+wtf preflight --config conf.toml
+```
+
+Run the full test sweep:
+
+```sh
+wtf run --config conf.toml
+```
+
+Results are written under `results/<timestamp>/` as JSON files.
+
+## Roadmap
   - [ ] pip publish
-  - [ ] latency measurement
-  - [ ] jitter measurement
   - [ ] RTT measurement
