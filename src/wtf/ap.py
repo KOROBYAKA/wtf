@@ -246,29 +246,45 @@ class Ap():
         ping_proc = None
         remote_thread = None
 
+
         iperf_stdout = ""
         iperf_stderr = ""
-        ping_stdout = ""
-        ping_stderr = ""
-        remote_result = {}
+        ping_stdout_loaded = ""
+        ping_stderr_loaded = ""
+        ping_stdout_cold = ""
+        ping_stderr_cold = ""
+        remote_result_loaded = {}
+        remote_result_cold = {}
+
 
         try:
+            #RTT measurement ONLY, without other load
+            ping_proc = self.ping_local()
+            remote_thread = self.ping_remote(remote_result_cold)
+            remote_thread.start()
+            ping_stdout_cold, ping_stderr_cold = ping_proc.communicate()
+            if ping_proc is not None and ping_proc.poll() is None:
+                ping_proc.send_signal(signal.SIGINT)
+            remote_thread.join(timeout=self.test_duration * 0.8)
+
+            #Throughput and RTT test
+
             iperf_proc = self.run_iperf(iperf_cmd)
             time.sleep(self.test_duration*0.1)
-            remote_thread = self.ping_remote(remote_result)
-            remote_thread.start()
+            remote_thread = self.ping_remote(remote_result_loaded)
 
+            remote_thread.start()
             ping_proc = self.ping_local()
 
             iperf_stdout, iperf_stderr = iperf_proc.communicate()
-            ping_stdout, ping_stderr = ping_proc.communicate()
+            ping_stdout_loaded, ping_stderr_loaded = ping_proc.communicate()
 
             remote_thread.join(timeout=self.test_duration*0.8)
 
         finally:
             if ping_proc is not None and ping_proc.poll() is None:
                 ping_proc.send_signal(signal.SIGINT)
-                ping_stdout, ping_stderr = ping_proc.communicate()
+                ping_stdout_loaded, ping_stderr_loaded = ping_proc.communicate()
 
             if remote_thread is not None and remote_thread.is_alive():
                 remote_thread.join(timeout=2)
@@ -281,23 +297,32 @@ class Ap():
             return None
 
         try:
-            local_ping_result_decode = ping_stdout.decode('utf-8')
-            local_ping_record = parse_ping_result(local_ping_result_decode)
-            remote_ping_record = parse_ping_result(remote_result.get("stdout", ""))
+            local_ping_result_decode_loaded = ping_stdout_loaded.decode('utf-8')
+            local_ping_result_decode_cold = ping_stdout_cold.decode('utf-8')
+            local_ping_record_loaded = parse_ping_result(local_ping_result_decode_loaded)
+            local_ping_record_cold = parse_ping_result(local_ping_result_decode_cold)
+            remote_ping_record_loaded = parse_ping_result(remote_result_loaded.get("stdout", ""))
+            remote_ping_record_cold = parse_ping_result(remote_result_cold.get("stdout", ""))
         except Exception:
             return None
 
         if self.execution_mode == 1:
-            ap_to_client_ping_result = local_ping_record
-            client_to_ap_ping_result = remote_ping_record
+            ap_to_client_ping_result_loaded = local_ping_record_loaded
+            client_to_ap_ping_result_loaded = remote_ping_record_loaded
+            ap_to_client_ping_result_cold = local_ping_record_cold
+            client_to_ap_ping_result_cold = remote_ping_record_cold
         else:
-            ap_to_client_ping_result = remote_ping_record
-            client_to_ap_ping_result = local_ping_record
+            ap_to_client_ping_result_loaded = remote_ping_record_loaded
+            client_to_ap_ping_result_loaded = local_ping_record_loaded
+            ap_to_client_ping_result_cold = remote_ping_record_cold
+            client_to_ap_ping_result_cold = local_ping_record_cold
 
         data_record = create_data_record(
             iperf_record,
-            ap_to_client_ping_result,
-            client_to_ap_ping_result,
+            ap_to_client_ping_result_loaded,
+            client_to_ap_ping_result_loaded,
+            ap_to_client_ping_result_cold,
+            client_to_ap_ping_result_cold,
         )
 
         return data_record

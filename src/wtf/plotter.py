@@ -39,7 +39,7 @@ def plot_data(data, show=True):
             direction,
             metric="throughput",
             title="Throughput",
-            ylabel="Throughput (Mbit/s)",
+            ylabel="Throughput(Mbps)",
         )
         _plot_metric(
             axes[1],
@@ -49,7 +49,7 @@ def plot_data(data, show=True):
             direction,
             metric="rtt",
             title="RTT",
-            ylabel="RTT (ms)",
+            ylabel="RTT(ms)",
         )
 
         axes[0].tick_params(axis="x", labelbottom=True)
@@ -75,7 +75,7 @@ def _load_matplotlib():
     try:
         import matplotlib.pyplot as plt
     except ImportError as exc:
-        raise RuntimeError("Plotting requires matplotlib. Install it with: pip install 'WTF[plot]'") from exc
+        raise RuntimeError("Plotting requires matplotlib. Install it with: pip install wtf matplotlib") from exc
 
     return plt
 
@@ -141,54 +141,72 @@ def _plot_rtt_metric(axis, x_values, records):
         "ap_to_client": "tab:blue",
         "client_to_ap": "tab:orange",
     }
+    window_styles = {
+        "loaded": "-",
+        "cold": "--",
+    }
+    series_offsets = {
+        ("ap_to_client", "loaded"): -0.18,
+        ("ap_to_client", "cold"): -0.06,
+        ("client_to_ap", "loaded"): 0.06,
+        ("client_to_ap", "cold"): 0.18,
+    }
 
     for direction in ("ap_to_client", "client_to_ap"):
-        stats = []
-        plot_x_values = []
-        avg_x_values = []
-        avg_values = []
+        for window in ("loaded", "cold"):
+            stats = []
+            plot_x_values = []
+            avg_x_values = []
+            avg_values = []
+            offset = series_offsets[(direction, window)]
 
-        for x_value, item in zip(x_values, records):
-            stat = _rtt_box_stat(item["record"], direction)
-            if stat is None:
+            for x_value, item in zip(x_values, records):
+                stat = _rtt_box_stat(item["record"], direction, window)
+                if stat is None:
+                    continue
+
+                shifted_x_value = x_value + offset
+                stats.append(stat)
+                plot_x_values.append(shifted_x_value)
+                avg_x_values.append(shifted_x_value)
+                avg_values.append(stat["med"])
+
+            if not stats:
                 continue
 
-            stats.append(stat)
-            plot_x_values.append(x_value)
-            avg_x_values.append(x_value)
-            avg_values.append(stat["med"])
+            linestyle = window_styles[window]
+            label = f"{direction} {window}"
 
-        if not stats:
-            continue
+            for index, stat in enumerate(stats):
+                x_value = plot_x_values[index]
+                axis.vlines(
+                    x_value,
+                    stat["whislo"],
+                    stat["whishi"],
+                    color=direction_colors[direction],
+                    alpha=0.65,
+                    linewidth=2.0,
+                    linestyles=linestyle,
+                )
+                axis.hlines(
+                    [stat["whislo"], stat["whishi"]],
+                    x_value - cap_half_width,
+                    x_value + cap_half_width,
+                    color=direction_colors[direction],
+                    alpha=0.65,
+                    linewidth=2.0,
+                    linestyles=linestyle,
+                )
 
-        for index, stat in enumerate(stats):
-            x_value = plot_x_values[index]
-            axis.vlines(
-                x_value,
-                stat["whislo"],
-                stat["whishi"],
+            axis.plot(
+                avg_x_values,
+                avg_values,
                 color=direction_colors[direction],
-                alpha=0.65,
-                linewidth=2.0,
-                label=f"{direction} min-max" if index == 0 else None,
+                marker="o",
+                linewidth=1.5,
+                linestyle=linestyle,
+                label=label,
             )
-            axis.hlines(
-                [stat["whislo"], stat["whishi"]],
-                x_value - cap_half_width,
-                x_value + cap_half_width,
-                color=direction_colors[direction],
-                alpha=0.65,
-                linewidth=2.0,
-            )
-
-        axis.plot(
-            avg_x_values,
-            avg_values,
-            color=direction_colors[direction],
-            marker="o",
-            linewidth=1.5,
-            label=f"{direction} avg",
-        )
 
 
 def _throughput_series(records, direction):
@@ -207,14 +225,21 @@ def _throughput_value(record, direction):
     return record.get("throughput", {}).get(direction)
 
 
-def _rtt_value(record, direction, statistic):
-    return record.get(f"ping_{direction}_rtt_{statistic}_ms")
+def _rtt_value(record, direction, statistic, window):
+    value = record.get(f"{direction}_ping_result_{window}_rtt_{statistic}_ms")
+    if value is not None:
+        return value
+
+    if window == "loaded":
+        return record.get(f"ping_{direction}_rtt_{statistic}_ms")
+
+    return None
 
 
-def _rtt_box_stat(record, direction):
-    min_value = _rtt_value(record, direction, "min")
-    avg_value = _rtt_value(record, direction, "avg")
-    max_value = _rtt_value(record, direction, "max")
+def _rtt_box_stat(record, direction, window):
+    min_value = _rtt_value(record, direction, "min", window)
+    avg_value = _rtt_value(record, direction, "avg", window)
+    max_value = _rtt_value(record, direction, "max", window)
 
     if min_value is None and avg_value is None and max_value is None:
         return None

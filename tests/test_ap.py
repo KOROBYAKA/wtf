@@ -84,7 +84,8 @@ def test_run_test_udp_adds_udp_flag(valid_config_exec0, monkeypatch):
     monkeypatch.setattr(Ap, "ping_remote", fake_ping_remote)
     monkeypatch.setattr(ap_module, "parse_iperf_result", lambda raw, mode: {})
     monkeypatch.setattr(ap_module, "parse_ping_result", lambda raw: {})
-    monkeypatch.setattr(ap_module, "create_data_record", lambda iperf, ap_ping, cl_ping: {})
+    monkeypatch.setattr(ap_module, "create_data_record", lambda iperf, ap_ping_cold,
+                                                                cl_ping_cold, ap_ping_loaded, cl_ping_loaded: {})
     monkeypatch.setattr(ap_module.time, "sleep", lambda _: None)
 
     ap = Ap.build_ap(valid_config_exec0)
@@ -140,7 +141,8 @@ def test_run_test_udp_adds_udp_flag(valid_config_exec0, monkeypatch):
     monkeypatch.setattr(Ap, "ping_remote", fake_ping_remote)
     monkeypatch.setattr(ap_module, "parse_iperf_result", lambda raw, mode: {})
     monkeypatch.setattr(ap_module, "parse_ping_result", lambda raw: {})
-    monkeypatch.setattr(ap_module, "create_data_record", lambda iperf, ap_ping, cl_ping: {})
+    monkeypatch.setattr(ap_module, "create_data_record", lambda iperf, ap_ping_cold,
+                                                                cl_ping_cold, ap_ping_loaded, cl_ping_loaded: {})
     monkeypatch.setattr(ap_module.time, "sleep", lambda _: None)
 
     ap = Ap.build_ap(valid_config_exec0)
@@ -212,11 +214,19 @@ def test_run_test_tcp_orchestration(valid_config_exec0, monkeypatch):
             "ping_raw": raw,
         }
 
-    def fake_create_data_record(iperf_record, ap_to_client_ping, client_to_ap_ping):
+    def fake_create_data_record(
+        iperf_record,
+        ap_to_client_ping_result_loaded,
+        client_to_ap_ping_result_loaded,
+        ap_to_client_ping_result_cold,
+        client_to_ap_ping_result_cold,
+        ):
         return {
             "iperf": iperf_record,
-            "ap_to_client_ping": ap_to_client_ping,
-            "client_to_ap_ping": client_to_ap_ping,
+            "ap_to_client_ping_result_loaded":ap_to_client_ping_result_loaded,
+            "client_to_ap_ping_result_loaded": client_to_ap_ping_result_loaded,
+            "ap_to_client_ping_result_cold": ap_to_client_ping_result_cold,
+            "client_to_ap_ping_result_cold": client_to_ap_ping_result_cold,
         }
 
     monkeypatch.setattr(ap_module, "remote_execution", fake_remote_execution)
@@ -248,10 +258,16 @@ def test_run_test_tcp_orchestration(valid_config_exec0, monkeypatch):
             "iperf_ok": True,
             "execution_mode": ap.execution_mode,
         },
-        "ap_to_client_ping": {
+        "ap_to_client_ping_result_loaded": {
             "ping_raw": "REMOTE PING OUTPUT",
         },
-        "client_to_ap_ping": {
+        "client_to_ap_ping_result_loaded": {
+            "ping_raw": "LOCAL PING OUTPUT",
+        },
+        "ap_to_client_ping_result_cold": {
+            "ping_raw": "REMOTE PING OUTPUT",
+        },
+        "client_to_ap_ping_result_cold": {
             "ping_raw": "LOCAL PING OUTPUT",
         },
     }
