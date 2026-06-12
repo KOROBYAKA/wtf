@@ -199,14 +199,14 @@ class Ap():
 
     @debug_printer
     def run_iperf(self, cmd):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return proc
 
     @debug_printer
     def ping_local(self):
         cmd = build_ping_cmd(source_ip=self.local_wifi_ip, target_ip=self.remote_wifi_ip,
                              freq=self.ping_freq, duration=self.test_duration)
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return proc
 
     @debug_printer
@@ -233,7 +233,11 @@ class Ap():
 
     @debug_printer
     def run_test(self, direction, transport):
-        _, _ = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
+        _, returncode = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
+        if returncode is not 0:
+            _, _ = remote_execution(client=self.client, cmds=["killall iperf3"])
+            _, returncode = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
+
         if transport == "tcp":
             iperf_cmd = self.iperf_cmd + [direction]
         else:
@@ -259,7 +263,7 @@ class Ap():
             iperf_stdout, iperf_stderr = iperf_proc.communicate()
             ping_stdout, ping_stderr = ping_proc.communicate()
 
-            remote_thread.join(timeout=3)
+            remote_thread.join(timeout=self.test_duration*0.8)
 
         finally:
             if ping_proc is not None and ping_proc.poll() is None:

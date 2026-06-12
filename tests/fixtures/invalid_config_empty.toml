@@ -30,6 +30,11 @@ client_to_ap = ""
 ap_to_client = ""
 bidirectional = ""
 
+[transport]
+#Transport protocols to test
+tcp = 1
+udp = 1
+
 [iperf_args]
 #Test duration(seconds)
 timeout = ""

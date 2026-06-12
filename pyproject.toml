@@ -11,6 +11,7 @@ wtf = "wtf.main:main"
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "assertpy>=1.0"
 ]
 
 [project]
@@ -27,7 +28,7 @@ dependencies = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+    "Operating System :: Linux",
 ]
 license = "AGPL-3.0"
 license-files = ["LICEN[CS]E*"]
