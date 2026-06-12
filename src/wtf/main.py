@@ -82,7 +82,14 @@ def main():
                     for transport, v in config["transport"].items():
                         if v:
                             result = AP.run_test(direction_flag, transport)
-                            final_result[channel_key][htmode_key][direction][transport] = result
+                            if result is not None:
+                                final_result[channel_key][htmode_key][direction][transport] = result
+                            elif result is None:
+                                print(
+                                    f"Skipping failed test: "
+                                    f"channel={channel_key}, htmode={htmode_key}, "
+                                    f"direction={direction}, transport={transport}"
+                                )
 
         if AP.client is not None:
             AP.client.close()

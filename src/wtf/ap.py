@@ -277,10 +277,15 @@ class Ap():
         iperf_results_decode = iperf_stdout.decode('utf-8')
         iperf_results_parsed = json.loads(iperf_results_decode)
         iperf_record = parse_iperf_result(iperf_results_parsed, self.execution_mode)
+        if iperf_record is None:
+            return None
 
-        local_ping_result_decode = ping_stdout.decode('utf-8')
-        local_ping_record = parse_ping_result(local_ping_result_decode)
-        remote_ping_record = parse_ping_result(remote_result.get("stdout", ""))
+        try:
+            local_ping_result_decode = ping_stdout.decode('utf-8')
+            local_ping_record = parse_ping_result(local_ping_result_decode)
+            remote_ping_record = parse_ping_result(remote_result.get("stdout", ""))
+        except Exception:
+            return None
 
         if self.execution_mode == 1:
             ap_to_client_ping_result = local_ping_record
