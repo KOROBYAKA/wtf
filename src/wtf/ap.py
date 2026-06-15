@@ -234,9 +234,9 @@ class Ap():
     @debug_printer
     def run_test(self, direction, transport):
         _, returncode = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
-        if returncode is not 0:
+        if returncode[0] != 0:
             _, _ = remote_execution(client=self.client, cmds=["killall iperf3"])
-            _, returncode = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
+            _, _ = remote_execution(client=self.client, cmds=["iperf3 -s -D"])
 
         if transport == "tcp":
             iperf_cmd = self.iperf_cmd + [direction]
