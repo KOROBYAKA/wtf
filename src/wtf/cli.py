@@ -28,7 +28,7 @@ def get_parser():
     parser_plot.add_argument('--path', dest='path_option', help="Path to results.json or a result directory")
     parser_plot.add_argument('--debug', default=False, action='store_true')
 
-    parser.add_argument('-v', '--version', action='version', version='%(prog)s 1.0')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 0.2.0')
 
 
 
