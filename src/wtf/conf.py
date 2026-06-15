@@ -86,6 +86,16 @@ def config_validation(config):
         if type(enabled) is not int or enabled not in (0, 1):
             raise InvalidFieldError(f"transport.{transport}", enabled)
 
+    for directions, enabled in config["directions"].items():
+        if type(enabled) is not int or enabled not in (0, 1):
+            raise InvalidFieldError(f"directions.{directions}", enabled)
+
+    if config["ping_args"]["frequency"] not in range(1,500):
+        raise InvalidFieldError("ping_args.frequency", config["ping_args"]["frequency"])
+
+    if not isinstance(config["iperf_args"]["timeout"], int):
+        raise InvalidFieldError("iperf_args.timeout", config["iperf_args"]["timeout"])
+
     if config["ap_conf"]["ap_wifi_ip"] == config["client_conf"]["cl_wifi_ip"]:
         raise ConfigConflictError("ap_wifi_ip and cl_wifi_ip must be different")
 

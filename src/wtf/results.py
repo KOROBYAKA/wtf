@@ -43,7 +43,7 @@ def save_results(format, final_result, metadata):
         base_dir = path.joinpath("results")
         if not base_dir.exists():
             os.mkdir(str(base_dir))
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         res_dir = base_dir.joinpath(timestamp)
         if not res_dir.exists():
             os.mkdir(str(res_dir))

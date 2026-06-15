@@ -16,7 +16,7 @@ dev = [
 
 [project]
 name = "wtf"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
   { name="Aleksei Zuev", email="zuevaleksei01@gmail.com" },
 ]
