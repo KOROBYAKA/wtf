@@ -1,12 +1,24 @@
 # WTF - Wi-Fi Test Framework
 
-WTF is a Python CLI tool for automating Wi-Fi throughput tests across Wi-Fi radio settings.
+WTF is a Python CLI tool for automating Wi-Fi throughput and latency tests across Wi-Fi radio settings.
 
-At the current stage, WTF is designed for OpenWrt-based access points. It controls the AP over SSH, changes wireless settings through UCI, runs iperf3 throughput tests, and records ping-based latency data alongside throughput results.
+At the current stage, WTF is designed for OpenWrt-based access points. It controls the AP over SSH, changes wireless settings through UCI, runs iperf3 throughput tests, records ping-based latency telemetry, and plots saved result files.
+
+Current version: `0.2.0`
 
 ## Why?
 
 Manually changing Wi-Fi channel and bandwidth settings, running a test, recording the result, and repeating that cycle many times is tedious and error-prone. WTF automates that loop.
+
+## Features
+
+- OpenWrt AP control over SSH and UCI.
+- Automatic sweep over supported Wi-Fi channels and HT modes reported by `iwinfo`.
+- iperf3 throughput tests for TCP and UDP.
+- Traffic directions: client-to-AP, AP-to-client, and bidirectional.
+- Ping telemetry before load and during iperf load.
+- JSON result and metadata output.
+- Plotting for throughput, RTT, and CPU load from saved result files.
 
 ## Prerequisites
 
@@ -21,10 +33,10 @@ Manually changing Wi-Fi channel and bandwidth settings, running a test, recordin
 
 ## Installation
 
-From PyPI:
+From PyPI, after the package is published:
 
 ```sh
-pip install WTF
+pip install wtf
 ```
 
 From source:
@@ -53,6 +65,14 @@ cp conf.toml.example conf.toml
 
 Set the control-plane and Wi-Fi test-plane IP addresses, OpenWrt wireless identifiers, enabled directions, enabled transports, iperf settings, and ping frequency.
 
+Execution mode controls where WTF itself is running:
+
+```toml
+# 0: WTF runs on the client/controller machine
+# 1: WTF runs on the AP
+execution_mode = 0
+```
+
 Transport flags use `1` for enabled and `0` for disabled:
 
 ```toml
@@ -69,6 +89,21 @@ client_to_ap = 1
 ap_to_client = 1
 bidirectional = 1
 ```
+
+iperf and ping settings:
+
+```toml
+[iperf_args]
+timeout = 15
+bandwidth = 0
+packet_length = 0
+fragmentation = 1
+
+[ping_args]
+frequency = 10
+```
+
+`check-config` validates required sections, IP address syntax and conflicts, execution mode, direction flags, transport flags, ping frequency, and iperf timeout type.
 
 ## Usage
 
@@ -90,7 +125,21 @@ Run the full test sweep:
 wtf run --config conf.toml
 ```
 
-Results are written under `results/<timestamp>/` as JSON files.
+Results are written under `results/<timestamp>/`.
+
+Each run writes:
+
+- `results.json`: channel, HT mode, direction, transport, throughput, CPU, packet loss, and RTT telemetry.
+- `metadata.json`: execution mode, configured AP/client addresses, wireless identifiers, and generated iperf/ping commands.
+
+Telemetry includes:
+
+- iperf status, duration, reverse/bidirectional flags.
+- Throughput in Mbps for `ap_to_client` and `client_to_ap`.
+- Host and remote CPU utilization reported by iperf3.
+- Ping packet counts, packet loss, and RTT min/avg/max/mdev for both cold and loaded windows.
+
+## Plotting
 
 Plot the newest result file:
 
@@ -105,6 +154,35 @@ wtf plot --path results/2026-06-12_12-00/results.json
 wtf plot results/2026-06-12_12-00
 ```
 
+The plotter creates one figure per direction and transport pair. Each figure contains:
+
+- throughput by channel and HT mode;
+- RTT by channel and HT mode;
+- CPU load overlay for the nodes present in the result file.
+
+## Development
+
+Run the test suite from the working tree:
+
+```sh
+PYTHONPATH=src pytest
+```
+
+Build release artifacts:
+
+```sh
+rm -rf dist
+python -m build
+```
+
+Before publishing, verify the wheel contains `wtf/plotter.py`, `wtf/telemetry_handling.py`, and `wtf-<version>.dist-info/licenses/LICENSE`.
+
+## License
+
+WTF is licensed under the GNU Affero General Public License v3.0. See `LICENSE`.
+
 ## Roadmap
-  - [ ] pip publish
-  - [ ] RTT measurement
+
+- [ ] Publish package to PyPI.
+- [ ] Add direct telemetry parser tests.
+- [ ] Add direct plotter tests.
